@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Yanne &amp; Júlio</title>
+  <meta name="description" content="Confirme sua presença e veja todas as informações do nosso casamento.">
+
+  <!-- Compartilhamento no WhatsApp / redes (troque a imagem quando tiver) -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Yanne &amp; Júlio · 01.11.2027">
+  <meta property="og:description" content="Confirme sua presença e veja todas as informações do nosso casamento.">
+  <meta name="theme-color" content="#7c8b63">
+
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌿</text></svg>">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="assets/css/tema.css">
+  <link rel="stylesheet" href="assets/css/estilo.css">
+</head>
+<body>
+
+<a class="pular-para-conteudo" href="#conteudo">Pular para o conteúdo</a>
+
+<!-- ===================== TOPO ===================== -->
+<header class="topo" id="topo">
+  <div class="container topo__barra">
+    <a class="topo__marca" href="#inicio" id="marca">&nbsp;</a>
+    <button class="topo__hamburguer" id="hamburguer" aria-label="Abrir menu" aria-expanded="false" aria-controls="menu">
+      <span></span><span></span><span></span>
+    </button>
+    <nav aria-label="Menu principal">
+      <ul class="topo__menu" id="menu">
+        <li><a href="#historia">História</a></li>
+        <li><a href="#quando">O grande dia</a></li>
+        <li><a href="#info">Informações</a></li>
+        <li><a href="#confirmar">Confirmar presença</a></li>
+        <li><a href="#presentes">Presentes</a></li>
+        <li><a href="#recados">Recados</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<main id="conteudo">
+
+  <!-- ===================== CAPA ===================== -->
+  <section class="hero" id="inicio">
+    <div class="hero__foto" id="hero-foto" aria-hidden="true"></div>
+    <div class="hero__conteudo container">
+      <span class="monograma" id="monograma" aria-hidden="true"></span>
+      <p class="hero__intro" id="hero-frase"></p>
+      <h1 class="hero__nomes" id="hero-nomes"></h1>
+      <p class="hero__data" id="hero-data"></p>
+      <span class="sprig sprig--hero" aria-hidden="true"></span>
+      <div class="contagem" id="contagem" aria-live="polite"></div>
+      <a class="botao" href="#confirmar">Confirmar presença</a>
+    </div>
+    <div class="hero__rolar" aria-hidden="true"></div>
+  </section>
+
+  <!-- ===================== NOSSA HISTÓRIA ===================== -->
+  <section class="secao" id="historia">
+    <div class="container">
+      <div class="secao__cabecalho aparece">
+        <span class="secao__olho">O começo de tudo</span>
+        <h2 class="secao__titulo" id="historia-titulo"></h2>
+        <p class="secao__texto" id="historia-texto"></p>
+        <div class="ornamento" aria-hidden="true"><span class="sprig"></span></div>
+      </div>
+      <ol class="linha-tempo aparece" id="linha-tempo"></ol>
+    </div>
+  </section>
+
+  <!-- ===================== O GRANDE DIA ===================== -->
+  <section class="secao secao--alt" id="quando">
+    <div class="container">
+      <div class="secao__cabecalho aparece">
+        <span class="secao__olho">Onde e quando</span>
+        <h2 class="secao__titulo">O grande dia</h2>
+        <p class="secao__texto" id="quando-data"></p>
+      </div>
+      <div class="grade grade--2 aparece" id="eventos"></div>
+    </div>
+  </section>
+
+  <!-- ===================== INFORMAÇÕES ===================== -->
+  <section class="secao" id="info">
+    <div class="container">
+      <div class="secao__cabecalho aparece">
+        <span class="secao__olho">Para você se organizar</span>
+        <h2 class="secao__titulo">Informações úteis</h2>
+      </div>
+      <div class="grade aparece" id="informacoes"></div>
+    </div>
+  </section>
+
+  <!-- ===================== CONFIRMAÇÃO DE PRESENÇA ===================== -->
+  <section class="secao secao--alt" id="confirmar">
+    <div class="container">
+      <div class="secao__cabecalho aparece">
+        <span class="secao__olho">RSVP</span>
+        <h2 class="secao__titulo" id="rsvp-titulo"></h2>
+        <p class="secao__texto" id="rsvp-texto"></p>
+      </div>
+
+      <form class="formulario aparece" id="form-rsvp" novalidate>
+        <div class="campo">
+          <label class="campo__rotulo" for="rsvp-nome">Nome completo <span class="obrigatorio">*</span></label>
+          <input type="text" id="rsvp-nome" name="nome" required autocomplete="name" placeholder="Como está no convite">
+          <p class="campo__erro oculto" data-erro="nome"></p>
+        </div>
+
+        <div class="campo-duplo">
+          <div class="campo">
+            <label class="campo__rotulo" for="rsvp-telefone">WhatsApp <span class="obrigatorio">*</span></label>
+            <input type="tel" id="rsvp-telefone" name="telefone" required autocomplete="tel" placeholder="(31) 99999-9999" inputmode="tel">
+            <p class="campo__erro oculto" data-erro="telefone"></p>
+          </div>
+          <div class="campo">
+            <label class="campo__rotulo" for="rsvp-email">E-mail</label>
+            <input type="email" id="rsvp-email" name="email" autocomplete="email" placeholder="opcional">
+          </div>
+        </div>
+
+        <div class="campo">
+          <span class="campo__rotulo">Você vai poder vir? <span class="obrigatorio">*</span></span>
+          <div class="escolha">
+            <label>
+              <input type="radio" name="presenca" value="sim" checked>
+              <span>Sim, estarei lá</span>
+            </label>
+            <label>
+              <input type="radio" name="presenca" value="nao">
+              <span>Infelizmente não vou poder</span>
+            </label>
+          </div>
+        </div>
+
+        <div id="bloco-acompanhantes">
+          <div class="campo">
+            <label class="campo__rotulo" for="rsvp-qtd">Quantas pessoas vão com você?</label>
+            <select id="rsvp-qtd" name="quantidade"></select>
+            <p class="campo__ajuda">Conte apenas os acompanhantes, sem incluir você.</p>
+          </div>
+
+          <div class="campo oculto" id="campo-nomes">
+            <label class="campo__rotulo">Nome dos acompanhantes</label>
+            <div class="acompanhantes__lista" id="acompanhantes"></div>
+          </div>
+
+          <div class="campo">
+            <label class="campo__rotulo" for="rsvp-restricao">Alguma restrição alimentar?</label>
+            <input type="text" id="rsvp-restricao" name="restricao" placeholder="Ex.: vegetariano, sem lactose, sem glúten">
+            <p class="campo__ajuda">Vale para você e seus acompanhantes.</p>
+          </div>
+        </div>
+
+        <div class="campo">
+          <label class="campo__rotulo" for="rsvp-mensagem">Quer deixar um recado?</label>
+          <textarea id="rsvp-mensagem" name="mensagem" placeholder="Opcional"></textarea>
+        </div>
+
+        <button type="submit" class="botao botao--largo" id="rsvp-enviar">Enviar confirmação</button>
+        <p class="campo__ajuda" style="text-align:center" id="rsvp-prazo"></p>
+      </form>
+
+      <div class="formulario oculto" id="rsvp-sucesso" style="text-align:center">
+        <div class="ornamento" aria-hidden="true"><span class="sprig"></span></div>
+        <h3 style="font-family:var(--fonte-titulo);font-size:1.8rem;margin:1.2rem 0 .6rem" id="sucesso-titulo"></h3>
+        <p style="color:var(--cor-texto-suave)" id="sucesso-texto"></p>
+        <button class="botao botao--vazado botao--pequeno" id="rsvp-novo" style="margin-top:1rem">Confirmar outra pessoa</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== LISTA DE PRESENTES ===================== -->
+  <section class="secao" id="presentes">
+    <div class="container">
+      <div class="secao__cabecalho aparece">
+        <span class="secao__olho">Se quiser nos presentear</span>
+        <h2 class="secao__titulo" id="presentes-titulo"></h2>
+        <p class="secao__texto" id="presentes-texto"></p>
+      </div>
+      <div class="filtros" id="filtros" role="group" aria-label="Filtrar presentes"></div>
+      <div class="presentes" id="lista-presentes"></div>
+    </div>
+  </section>
+
+  <!-- ===================== RECADOS ===================== -->
+  <section class="secao secao--alt" id="recados">
+    <div class="container">
+      <div class="secao__cabecalho aparece">
+        <span class="secao__olho">Mural</span>
+        <h2 class="secao__titulo" id="recados-titulo"></h2>
+        <p class="secao__texto" id="recados-texto"></p>
+      </div>
+
+      <form class="formulario aparece" id="form-recado">
+        <div class="campo-duplo">
+          <div class="campo">
+            <label class="campo__rotulo" for="recado-nome">Seu nome <span class="obrigatorio">*</span></label>
+            <input type="text" id="recado-nome" required autocomplete="name">
+          </div>
+          <div class="campo">
+            <label class="campo__rotulo" for="recado-msg">Recado <span class="obrigatorio">*</span></label>
+            <input type="text" id="recado-msg" required maxlength="300" placeholder="Um votinho para os noivos">
+          </div>
+        </div>
+        <button type="submit" class="botao botao--largo">Deixar recado</button>
+      </form>
+
+      <div class="recados" id="mural"></div>
+    </div>
+  </section>
+
+  <!-- ===================== GALERIA ===================== -->
+  <section class="secao oculto" id="galeria-secao">
+    <div class="container">
+      <div class="secao__cabecalho aparece">
+        <span class="secao__olho">Momentos</span>
+        <h2 class="secao__titulo" id="galeria-titulo"></h2>
+      </div>
+      <div class="galeria aparece" id="galeria"></div>
+    </div>
+  </section>
+
+  <!-- ===================== PERGUNTAS FREQUENTES ===================== -->
+  <section class="secao secao--alt" id="faq-secao">
+    <div class="container">
+      <div class="secao__cabecalho aparece">
+        <span class="secao__olho">Dúvidas</span>
+        <h2 class="secao__titulo">Perguntas frequentes</h2>
+      </div>
+      <div class="faq aparece" id="faq"></div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ===================== RODAPÉ ===================== -->
+<footer class="rodape">
+  <div class="container">
+    <span class="monograma monograma--rodape" id="rodape-monograma" aria-hidden="true"></span>
+    <p class="rodape__nomes" id="rodape-nomes" style="font-family:var(--fonte-titulo)"></p>
+    <p class="rodape__data" id="rodape-data"></p>
+    <p class="rodape__contato" id="rodape-contato"></p>
+    <p class="rodape__hashtag" id="rodape-hashtag"></p>
+    <p class="rodape__creditos">Feito com carinho · <a href="admin.html" style="color:inherit;text-decoration:none">·</a></p>
+  </div>
+</footer>
+
+<!-- ===================== JANELA DO PRESENTE ===================== -->
+<div class="janela" id="janela-presente" role="dialog" aria-modal="true" aria-labelledby="janela-titulo" hidden>
+  <div class="janela__caixa">
+    <button class="janela__fechar" id="janela-fechar" aria-label="Fechar">&times;</button>
+    <div id="janela-conteudo"></div>
+  </div>
+</div>
+
+<div class="aviso-flutuante" id="aviso" role="status" aria-live="polite"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="assets/js/conteudo.js"></script>
+<script src="assets/js/firebase-config.js"></script>
+<script src="assets/js/pix.js"></script>
+<script src="assets/js/dados.js"></script>
+<script src="assets/js/app.js"></script>
+</body>
+</html>

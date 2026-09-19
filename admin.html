@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Painel dos noivos</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍃</text></svg>">
+  <link rel="stylesheet" href="assets/css/tema.css">
+  <link rel="stylesheet" href="assets/css/estilo.css">
+  <style>
+    body { background: var(--cor-fundo-alt); }
+
+    .painel { max-width: 1180px; margin-inline: auto; padding: 1.5rem clamp(1rem,4vw,2rem) 4rem; }
+
+    .painel__topo {
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 1rem; padding-block: 1.5rem 2rem;
+    }
+    .painel__topo h1 { font-size: 1.9rem; }
+    .painel__topo p { margin: .2rem 0 0; font-size: .85rem; color: var(--cor-texto-suave); }
+
+    .numeros { display: grid; grid-template-columns: repeat(auto-fit,minmax(150px,1fr)); gap: 1rem; margin-bottom: 2rem; }
+    .numero {
+      background: var(--cor-superficie); border: 1px solid var(--cor-borda);
+      border-radius: var(--raio-grande); padding: 1.25rem 1.4rem;
+    }
+    .numero strong {
+      display: block; font-family: var(--fonte-titulo); font-size: 2.3rem;
+      line-height: 1; font-weight: 400; font-variant-numeric: tabular-nums;
+    }
+    .numero span {
+      font-size: var(--t-micro); letter-spacing: .12em; text-transform: uppercase;
+      color: var(--cor-texto-suave); display: block; margin-top: .45rem;
+    }
+    .numero--destaque strong { color: var(--cor-destaque); }
+
+    .abas { display: flex; gap: .4rem; flex-wrap: wrap; margin-bottom: 1.2rem; }
+    .aba {
+      background: none; border: 1px solid var(--cor-borda); border-radius: 100px;
+      padding: .5rem 1.2rem; font-size: var(--t-micro); letter-spacing: .1em;
+      text-transform: uppercase; cursor: pointer; transition: all var(--transicao);
+    }
+    .aba[aria-selected="true"] { background: var(--cor-destaque); border-color: var(--cor-destaque); color: #fff; }
+
+    .barra-acoes { display: flex; gap: .6rem; flex-wrap: wrap; align-items: center; margin-bottom: 1rem; }
+    .barra-acoes input[type=search] {
+      flex: 1 1 220px; background: var(--cor-superficie);
+      border: 1px solid var(--cor-borda); border-radius: var(--raio);
+      padding: .6rem .9rem; font: inherit; font-size: .92rem; color: var(--cor-texto);
+    }
+
+    .tabela-caixa {
+      background: var(--cor-superficie); border: 1px solid var(--cor-borda);
+      border-radius: var(--raio-grande); overflow-x: auto;
+    }
+    table { width: 100%; border-collapse: collapse; font-size: .9rem; min-width: 640px; }
+    th, td { padding: .85rem 1rem; text-align: left; border-bottom: 1px solid var(--cor-borda); vertical-align: top; }
+    th {
+      font-size: var(--t-micro); letter-spacing: .1em; text-transform: uppercase;
+      color: var(--cor-texto-suave); font-weight: 500; white-space: nowrap;
+      position: sticky; top: 0; background: var(--cor-superficie); z-index: 1;
+    }
+    tbody tr:last-child td { border-bottom: 0; }
+    tbody tr:hover { background: var(--cor-fundo); }
+
+    .etiqueta {
+      display: inline-block; font-size: .72rem; letter-spacing: .06em;
+      padding: .2rem .6rem; border-radius: 100px; white-space: nowrap;
+    }
+    .etiqueta--sim  { background: #e4ede4; color: #3f5c40; }
+    .etiqueta--nao  { background: #f4e2e0; color: #8f4840; }
+    .etiqueta--pago { background: var(--cor-destaque-suave); color: var(--cor-destaque-escuro); }
+
+    .mini {
+      background: none; border: 1px solid var(--cor-borda); border-radius: var(--raio);
+      padding: .3rem .7rem; font-size: .78rem; cursor: pointer; white-space: nowrap;
+      transition: all var(--transicao);
+    }
+    .mini:hover { border-color: var(--cor-destaque); color: var(--cor-destaque); }
+    .mini--perigo:hover { border-color: var(--cor-erro); color: var(--cor-erro); }
+
+    .vazio { padding: 3rem 1rem; text-align: center; color: var(--cor-texto-suave); font-style: italic; }
+
+    .login { max-width: 400px; margin: 12vh auto; }
+    .login h1 { font-size: 1.7rem; text-align: center; margin-bottom: .4rem; }
+    .login p  { text-align: center; color: var(--cor-texto-suave); font-size: .9rem; margin: 0 0 1.8rem; }
+
+    @media (max-width: 640px) {
+      .painel__topo { padding-block: 1rem 1.4rem; }
+      th, td { padding: .7rem .75rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ============ LOGIN ============ -->
+<div class="painel oculto" id="tela-login">
+  <form class="formulario login" id="form-login">
+    <h1>Painel dos noivos</h1>
+    <p>Acesso restrito</p>
+    <div class="campo">
+      <label class="campo__rotulo" for="email">E-mail</label>
+      <input type="email" id="email" required autocomplete="username">
+    </div>
+    <div class="campo">
+      <label class="campo__rotulo" for="senha">Senha</label>
+      <input type="password" id="senha" required autocomplete="current-password">
+    </div>
+    <button type="submit" class="botao botao--largo">Entrar</button>
+    <p class="campo__erro oculto" id="erro-login" style="text-align:center"></p>
+  </form>
+</div>
+
+<!-- ============ PAINEL ============ -->
+<div class="painel oculto" id="tela-painel">
+
+  <div class="painel__topo">
+    <div>
+      <h1 id="painel-titulo">Painel dos noivos</h1>
+      <p id="painel-sub"></p>
+    </div>
+    <div style="display:flex;gap:.5rem">
+      <a class="mini" href="index.html">Ver o site</a>
+      <button class="mini" id="sair">Sair</button>
+    </div>
+  </div>
+
+  <div class="numeros" id="numeros"></div>
+
+  <div class="abas" role="tablist">
+    <button class="aba" role="tab" data-aba="confirmacoes" aria-selected="true">Confirmações</button>
+    <button class="aba" role="tab" data-aba="presentes"    aria-selected="false">Presentes</button>
+    <button class="aba" role="tab" data-aba="recados"      aria-selected="false">Recados</button>
+  </div>
+
+  <div class="barra-acoes">
+    <input type="search" id="busca" placeholder="Buscar por nome...">
+    <button class="mini" id="exportar">Baixar planilha (CSV)</button>
+  </div>
+
+  <div class="tabela-caixa" id="tabela"></div>
+</div>
+
+<div class="aviso-flutuante" id="aviso" role="status" aria-live="polite"></div>
+
+<script src="assets/js/conteudo.js"></script>
+<script src="assets/js/firebase-config.js"></script>
+<script src="assets/js/dados.js"></script>
+<script src="assets/js/admin.js"></script>
+</body>
+</html>

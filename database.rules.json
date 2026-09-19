@@ -1,0 +1,57 @@
+{
+  "rules": {
+    "casamento": {
+
+      "confirmacoes": {
+        ".read": "auth != null",
+        ".indexOn": ["criadoEm"],
+        "$confirmacao": {
+          ".write": "(!data.exists() && newData.exists()) || auth != null",
+          ".validate": "newData.hasChildren(['nome', 'presenca', 'criadoEm'])",
+          "nome":      { ".validate": "newData.isString() && newData.val().length >= 2 && newData.val().length <= 120" },
+          "telefone":  { ".validate": "newData.isString() && newData.val().length <= 40" },
+          "email":     { ".validate": "newData.isString() && newData.val().length <= 120" },
+          "presenca":  { ".validate": "newData.val() === 'sim' || newData.val() === 'nao'" },
+          "quantidade":{ ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 20" },
+          "restricao": { ".validate": "newData.isString() && newData.val().length <= 300" },
+          "mensagem":  { ".validate": "newData.isString() && newData.val().length <= 600" },
+          "criadoEm":  { ".validate": "newData.isNumber()" },
+          "acompanhantes": {
+            "$indice": { ".validate": "newData.isString() && newData.val().length <= 120" }
+          },
+          "$outro": { ".validate": false }
+        }
+      },
+
+      "presentes": {
+        ".read": true,
+        "$presente": {
+          ".write": "(!data.exists() && newData.exists() && newData.child('pago').val() === false) || auth != null",
+          ".validate": "newData.hasChildren(['presente', 'nome', 'valor'])",
+          "presente":    { ".validate": "newData.isString() && newData.val().length <= 120" },
+          "nome":        { ".validate": "newData.isString() && newData.val().length >= 2 && newData.val().length <= 120" },
+          "valor":       { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 100000" },
+          "mensagem":    { ".validate": "newData.isString() && newData.val().length <= 300" },
+          "status":      { ".validate": "newData.isString()" },
+          "pago":        { ".validate": "newData.isBoolean()" },
+          "reservadoEm": { ".validate": "newData.isNumber()" },
+          "$outro": { ".validate": false }
+        }
+      },
+
+      "recados": {
+        ".read": true,
+        ".indexOn": ["criadoEm"],
+        "$recado": {
+          ".write": "(!data.exists() && newData.exists() && newData.child('aprovado').val() === false) || auth != null",
+          ".validate": "newData.hasChildren(['nome', 'mensagem', 'criadoEm'])",
+          "nome":     { ".validate": "newData.isString() && newData.val().length >= 2 && newData.val().length <= 80" },
+          "mensagem": { ".validate": "newData.isString() && newData.val().length >= 2 && newData.val().length <= 300" },
+          "aprovado": { ".validate": "newData.isBoolean()" },
+          "criadoEm": { ".validate": "newData.isNumber()" },
+          "$outro": { ".validate": false }
+        }
+      }
+    }
+  }
+}
