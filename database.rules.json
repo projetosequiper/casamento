@@ -4,21 +4,61 @@
 
       "confirmacoes": {
         ".read": "auth != null",
-        ".indexOn": ["criadoEm"],
-        "$confirmacao": {
-          ".write": "(!data.exists() && newData.exists()) || auth != null",
-          ".validate": "newData.hasChildren(['nome', 'presenca', 'criadoEm'])",
-          "nome":      { ".validate": "newData.isString() && newData.val().length >= 2 && newData.val().length <= 120" },
-          "telefone":  { ".validate": "newData.isString() && newData.val().length <= 40" },
-          "email":     { ".validate": "newData.isString() && newData.val().length <= 120" },
-          "presenca":  { ".validate": "newData.val() === 'sim' || newData.val() === 'nao'" },
-          "quantidade":{ ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 20" },
-          "restricao": { ".validate": "newData.isString() && newData.val().length <= 300" },
-          "mensagem":  { ".validate": "newData.isString() && newData.val().length <= 600" },
-          "criadoEm":  { ".validate": "newData.isNumber()" },
-          "acompanhantes": {
-            "$indice": { ".validate": "newData.isString() && newData.val().length <= 120" }
+        "$familia": {
+          ".write": "newData.exists() || auth != null",
+          ".validate": "newData.hasChildren(['familia', 'respondidoPor', 'pessoas', 'atualizadoEm'])",
+          "familia":       { ".validate": "newData.isString() && newData.val() === $familia" },
+          "respondidoPor": { ".validate": "newData.isString() && newData.val().length >= 2 && newData.val().length <= 120" },
+          "telefone":      { ".validate": "newData.isString() && newData.val().length <= 40" },
+          "restricao":     { ".validate": "newData.isString() && newData.val().length <= 400" },
+          "mensagem":      { ".validate": "newData.isString() && newData.val().length <= 600" },
+          "atualizadoEm":  { ".validate": "newData.isNumber()" },
+          "pessoas": {
+            ".validate": "newData.hasChildren()",
+            "$indice": {
+              ".validate": "newData.hasChildren(['nome', 'vai'])",
+              "nome": { ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 120" },
+              "vai":     { ".validate": "newData.isBoolean()" },
+              "crianca": { ".validate": "newData.isBoolean()" },
+              "$outro": { ".validate": false }
+            }
           },
+          "$outro": { ".validate": false }
+        }
+      },
+
+      "familias": {
+        ".read": true,
+        "$familia": {
+          ".write": "auth != null",
+          ".validate": "newData.hasChildren(['pessoas'])",
+          "rotulo": { ".validate": "newData.isString() && newData.val().length <= 80" },
+          "ordem":  { ".validate": "newData.isNumber()" },
+          "pessoas": {
+            ".validate": "newData.hasChildren()",
+            "$indice": {
+              ".validate": "newData.hasChildren(['nome'])",
+              "nome":    { ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 120" },
+              "crianca": { ".validate": "newData.isBoolean()" },
+              "apelidos": { "$i": { ".validate": "newData.isString() && newData.val().length <= 80" } },
+              "$outro": { ".validate": false }
+            }
+          },
+          "$outro": { ".validate": false }
+        }
+      },
+
+      "catalogo": {
+        ".read": true,
+        "$item": {
+          ".write": "auth != null",
+          "nome":      { ".validate": "newData.isString() && newData.val().length <= 120" },
+          "valor":     { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 100000" },
+          "categoria": { ".validate": "newData.isString() && newData.val().length <= 60" },
+          "descricao": { ".validate": "newData.isString() && newData.val().length <= 300" },
+          "imagem":    { ".validate": "newData.isString() && newData.val().length <= 600" },
+          "ordem":     { ".validate": "newData.isNumber()" },
+          "ativo":     { ".validate": "newData.isBoolean()" },
           "$outro": { ".validate": false }
         }
       },

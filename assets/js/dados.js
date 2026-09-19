@@ -97,17 +97,19 @@ window.DADOS = (function () {
 
     pronto: function () { return iniciar(); },
 
-    /* ---------- CONFIRMAÇÕES DE PRESENÇA ---------- */
-    salvarConfirmacao: function (dados) {
-      dados.criadoEm = Date.now();
+    /* ---------- CONFIRMAÇÕES DE PRESENÇA ----------
+       Gravadas pelo id da família: se a família confirmar de novo,
+       a resposta é atualizada em vez de duplicar.                  */
+    salvarConfirmacao: function (idFamilia, dados) {
+      dados.atualizadoEm = Date.now();
       return iniciar().then(function (ok) {
         if (!ok) {
           var todas = LOCAL.ler('confirmacoes', {});
-          todas[id()] = dados;
+          todas[idFamilia] = dados;
           LOCAL.gravar('confirmacoes', todas);
           return true;
         }
-        return ref('confirmacoes').push(dados).then(function () { return true; });
+        return ref('confirmacoes/' + idFamilia).set(dados).then(function () { return true; });
       });
     },
 
@@ -118,7 +120,73 @@ window.DADOS = (function () {
       });
     },
 
-    /* ---------- PRESENTES ---------- */
+    /* ---------- LISTA DE CONVIDADOS ----------
+       Fica no banco para ser editada pelo painel. Enquanto
+       estiver vazia, o site usa a lista do convidados.js.       */
+    ouvirFamilias: function (cb) {
+      iniciar().then(function (ok) {
+        if (!ok) return ouvirLocal('familias', cb);
+        ref('familias').on('value', function (snap) { cb(snap.val() || {}); });
+      });
+    },
+
+    salvarFamilia: function (idFamilia, dados) {
+      return iniciar().then(function (ok) {
+        if (!ok) {
+          var todas = LOCAL.ler('familias', {});
+          if (dados === null) delete todas[idFamilia];
+          else todas[idFamilia] = dados;
+          LOCAL.gravar('familias', todas);
+          return true;
+        }
+        return dados === null
+          ? ref('familias/' + idFamilia).remove()
+          : ref('familias/' + idFamilia).set(dados);
+      });
+    },
+
+    salvarFamilias: function (mapa) {
+      return iniciar().then(function (ok) {
+        if (!ok) { LOCAL.gravar('familias', mapa); return true; }
+        return ref('familias').update(mapa);
+      });
+    },
+
+    /* ---------- CATÁLOGO DA LISTA DE PRESENTES ----------
+       Os itens da lista ficam no banco para poderem ser editados
+       pelo painel. Enquanto o catálogo estiver vazio, o site usa
+       a lista de exemplo do conteudo.js.                          */
+    ouvirCatalogo: function (cb) {
+      iniciar().then(function (ok) {
+        if (!ok) return ouvirLocal('catalogo', cb);
+        ref('catalogo').on('value', function (snap) { cb(snap.val() || {}); });
+      });
+    },
+
+    salvarItem: function (idItem, campos) {
+      return iniciar().then(function (ok) {
+        if (!ok) {
+          var todos = LOCAL.ler('catalogo', {});
+          if (campos === null) delete todos[idItem];
+          else todos[idItem] = Object.assign(todos[idItem] || {}, campos);
+          LOCAL.gravar('catalogo', todos);
+          return true;
+        }
+        return campos === null
+          ? ref('catalogo/' + idItem).remove()
+          : ref('catalogo/' + idItem).update(campos);
+      });
+    },
+
+    /* Grava vários itens de uma vez (usado na importação inicial) */
+    salvarCatalogo: function (mapa) {
+      return iniciar().then(function (ok) {
+        if (!ok) { LOCAL.gravar('catalogo', mapa); return true; }
+        return ref('catalogo').update(mapa);
+      });
+    },
+
+    /* ---------- PRESENTES ESCOLHIDOS ---------- */
     ouvirPresentes: function (cb) {
       iniciar().then(function (ok) {
         if (!ok) return ouvirLocal('presentes', cb);

@@ -13,19 +13,20 @@ Custo: **R$ 0,00** — só o domínio, se quiser um.
 | Nossa história (linha do tempo) | `#historia` |
 | Cerimônia e recepção, com link do mapa | `#quando` |
 | Informações úteis (traje, hospedagem, transporte, crianças) | `#info` |
-| Confirmação de presença com acompanhantes e restrição alimentar | `#confirmar` |
+| Confirmação de presença por lista fechada, com famílias | `#confirmar` |
 | Lista de presentes com PIX (QR Code + copia e cola) | `#presentes` |
 | Mural de recados com moderação | `#recados` |
 | Galeria de fotos | `#galeria` |
 | Perguntas frequentes | `#faq` |
-| Painel dos noivos com exportação para Excel | `admin.html` |
+| Área dos noivos, com senha | `admin.html` (menu ⋮ do site) |
 
 ---
 
-## Os 3 arquivos que você vai mexer
+## Os 4 arquivos que você vai mexer
 
 | Arquivo | Serve para |
 |---|---|
+| `assets/js/convidados.js` | **Lista de convidados**, organizada por família |
 | `assets/js/conteudo.js` | **Textos**: nomes, datas, locais, lista de presentes, chave PIX |
 | `assets/css/tema.css` | **Visual**: cores, fontes, arredondamentos, textura |
 | `assets/js/firebase-config.js` | **Conexão** com o banco de dados |
@@ -52,7 +53,12 @@ Uma tarja no topo avisa que está nesse modo.
 3. No menu lateral: **Criar** › **Authentication** › **Primeiros passos** ›
    ative o método **E-mail/senha**.
 4. Ainda em Authentication, aba **Users** › **Adicionar usuário**:
-   crie o e-mail e a senha que **você** vai usar para entrar no painel.
+   - **E-mail**: um e-mail só para isso, por exemplo `noivos@yanneejulio.com`.
+     Não precisa existir de verdade — é só um identificador.
+   - **Senha**: a senha que vocês vão digitar na Área dos noivos.
+     Mínimo de 6 caracteres.
+
+   Depois copie esse e-mail para `painel.email` em `assets/js/conteudo.js`.
 5. Clique na engrenagem ⚙️ › **Configurações do projeto** › role até
    **Seus apps** › ícone `</>` (Web) › registre o app.
    Vai aparecer um bloco `const firebaseConfig = { ... }`.
@@ -61,6 +67,56 @@ Copie os valores desse bloco para o arquivo **`assets/js/firebase-config.js`**.
 
 > ⚠️ Essas chaves são públicas por natureza — qualquer site Firebase as expõe.
 > Quem protege os dados são as **regras** do passo 4, não as chaves.
+
+---
+
+## A lista de convidados
+
+O convite não é aberto: só quem está na lista consegue confirmar. O convidado
+digita o nome, se encontra na lista e confirma por toda a família de uma vez.
+
+A lista mora em dois lugares, nessa ordem de prioridade:
+
+1. **No banco**, editável pela aba **Convidados** da Área dos noivos —
+   é o que você vai usar no dia a dia.
+2. **No arquivo** `assets/js/convidados.js`, que serve de ponto de partida
+   enquanto o banco estiver vazio.
+
+Na primeira vez, entre na aba Convidados e clique em **Publicar a lista
+atual**. Isso copia o arquivo para o banco. Dali em diante, tudo é feito pelo
+painel: adicionar família, adicionar pessoa, marcar quem é criança, corrigir
+nome, excluir. **As mudanças entram no ar na hora**, sem subir nada no GitHub.
+
+### Crianças
+
+Cada pessoa tem uma marcação de **criança**. O painel conta adultos e crianças
+separadamente — na hora de fechar o buffet, que costuma cobrar meia ou nada
+por criança, esse número é o que você vai precisar. A contagem aparece tanto
+dos convidados quanto dos que já confirmaram, e a planilha exportada traz uma
+coluna dizendo se é adulto ou criança.
+
+### Detalhes que importam
+
+- O **id** identifica a família no banco. Depois que o convite for enviado,
+  não mude um id existente — a confirmação já feita se perde. Famílias
+  criadas pelo painel ganham id sozinhas, então isso só é assunto se você
+  mexer no arquivo na mão.
+- **Nome da família** é opcional. Vazio, usamos o primeiro nome da lista.
+- A busca **ignora acentos e maiúsculas**: quem digita `erika` acha `Érika`.
+- Ela casa com o **começo de qualquer palavra** do nome: `dias` encontra
+  `Érika Dias` e `Gislaine Dias`.
+- Para quem é conhecido por outro nome, o arquivo aceita `apelidos`:
+  `{ nome: 'Beatriz Souza', apelidos: ['Bia'] }`.
+
+**Se a família confirmar duas vezes**, a segunda resposta substitui a
+primeira — de propósito, para quem mudar de ideia corrigir sozinho sem
+incomodar vocês. No painel você vê a data da última resposta.
+
+**Um aviso honesto:** a lista de nomes fica visível para quem for procurar no
+código do site. Não dá para esconder num site estático — e vale para qualquer
+plataforma de casamento que faça busca por nome. O que está protegido de
+verdade é **quem confirmou, os telefones e os valores**, que só aparecem para
+você logado na Área dos noivos.
 
 ---
 
@@ -91,11 +147,15 @@ conteúdo do arquivo `database.rules.json` › **Publicar**.
 
 O que essas regras fazem:
 
-- **Confirmações**: o convidado só consegue *criar* a dele. Ninguém além de
-  você (logado) consegue ler a lista de convidados.
+- **Confirmações**: o convidado só consegue gravar a resposta da própria
+  família, e no formato certo. Ninguém além de você (logado) consegue ler
+  quem confirmou.
 - **Presentes**: qualquer um lê a lista (para saber o que já foi escolhido),
   mas ninguém consegue alterar ou apagar um presente já reservado — só você.
 - **Recados**: o convidado envia sempre como "não aprovado". Só você aprova.
+- **Catálogo**: qualquer um lê a lista de presentes; só você (logado) edita.
+- **Convidados**: qualquer um lê a lista de nomes (o site precisa dela para a
+  busca funcionar); só você (logado) edita.
 
 > Se você colocar `moderar: false` no `conteudo.js`, precisa ajustar a regra
 > dos recados: troque `newData.child('aprovado').val() === false` por
@@ -131,21 +191,57 @@ https://SEU-USUARIO.github.io/casamento/
 
 ---
 
-## Passo 6 — O painel dos noivos
+## Passo 6 — A Área dos noivos
 
-Endereço: `https://SEU-USUARIO.github.io/casamento/admin.html`
+No site, o menu de **três pontinhos** no canto superior direito leva até lá.
+O endereço direto é `.../casamento/admin.html`.
 
-Entre com o e-mail e senha que você criou no passo 2.4. No painel você vê:
+A entrada é por **senha** — a mesma que você cadastrou no usuário do Firebase
+(passo 2.4). Para trocar depois: Firebase › Authentication › Users ›
+os três pontinhos ao lado do usuário › **Redefinir senha**.
 
-- **Resumo**: quantas pessoas confirmadas, quantos recusaram, valor dos presentes
-- **Confirmações**: lista completa, busca por nome, exportar para Excel (CSV)
-- **Presentes**: quem escolheu o quê, marcar como recebido, devolver à lista
-- **Recados**: aprovar ou tirar do mural
+### Como a senha funciona (e por que não fica no código)
 
-O link do painel não aparece no menu do site — só quem tem o endereço acessa,
-e mesmo assim precisa da senha.
+A senha **não está escrita em lugar nenhum** dos arquivos do site. O que
+acontece quando vocês digitam é que o site tenta fazer login no Firebase com
+ela. Quem diz "sim" ou "não" é o Firebase, do lado de fora.
 
----
+Isso importa porque qualquer pessoa consegue ler o código de um site — basta
+apertar F12. Se a senha estivesse escrita ali, seria decoração. Do jeito que
+está, mesmo alguém lendo todo o código não consegue entrar, e as regras do
+banco continuam exigindo login para devolver qualquer dado privado.
+
+> **Escolha uma senha com mais de 6 dígitos se puder.** Uma data de 6 números
+> tem só um milhão de combinações. O Firebase bloqueia tentativas repetidas,
+> mas uma senha maior é bem mais segura — e vocês vão digitar isso umas vinte
+> vezes na vida.
+
+### O que tem lá dentro
+
+**Resumo** — quanto já entrou de presente por categoria, os cinco últimos
+presentes recebidos, e a lista de quem ainda não confirmou presença.
+
+**Confirmações** — todas as famílias, com quem não respondeu no topo. Cada
+família que respondeu tem um botão de **WhatsApp** para falar direto.
+Exporta para Excel com uma linha por pessoa, pronto para montar mesas.
+
+**Presentes recebidos** — quem deu o quê, quanto foi, a mensagem que deixou.
+Quando o PIX cair na conta, clique em **Confirmar recebimento**: o valor sai
+de "aguardando conferência" e entra no total recebido. Se alguém marcar que
+pagou e o dinheiro não aparecer, **Devolver à lista** libera o presente.
+
+**Convidados** — a lista inteira, agrupada por família, com a contagem de
+adultos e crianças. Dá para adicionar família, adicionar ou remover pessoas,
+marcar quem é criança e corrigir nomes. Na primeira vez, clique em
+**Publicar a lista atual** para levar o arquivo `convidados.js` para o banco.
+
+**Editar lista** — adicionar, editar, esconder e excluir presentes, sem mexer
+em arquivo nenhum. Na primeira vez, clique em **Publicar a lista de exemplo**:
+isso copia os itens do `conteudo.js` para o banco. A partir daí, é esta tela
+que manda no que aparece no site — as mudanças entram no ar na hora, sem
+precisar subir nada no GitHub.
+
+**Recados** — aprovar ou tirar do mural.
 
 ## Passo 7 — Quando a identidade visual chegar
 
@@ -193,10 +289,13 @@ O site inteiro se adapta. Não precisa tocar em `estilo.css`.
 ## Checklist antes de mandar o convite
 
 - [ ] Nomes, data e horários corretos em `conteudo.js`
+- [ ] Lista de convidados publicada e completa (nomes como as pessoas se reconhecem)
+- [ ] Crianças marcadas, para a contagem do buffet fechar
 - [ ] Endereços e links de mapa testados no celular
 - [ ] Chave PIX testada de verdade (leia o QR no app do banco)
 - [ ] Regras do Firebase publicadas (senão o site não salva nada)
-- [ ] Login do painel funcionando
+- [ ] Senha da Área dos noivos funcionando
+- [ ] Lista de presentes publicada pelo painel (aba "Editar lista")
 - [ ] Confirmação de presença enviada como teste, e aparecendo no painel
 - [ ] Site aberto no celular — é onde 90% dos convidados vão acessar
 - [ ] Prazo de confirmação conferido

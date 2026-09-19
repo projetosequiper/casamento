@@ -27,9 +27,30 @@
 <header class="topo" id="topo">
   <div class="container topo__barra">
     <a class="topo__marca" href="#inicio" id="marca">&nbsp;</a>
-    <button class="topo__hamburguer" id="hamburguer" aria-label="Abrir menu" aria-expanded="false" aria-controls="menu">
-      <span></span><span></span><span></span>
-    </button>
+
+    <div class="topo__acoes">
+      <button class="topo__hamburguer" id="hamburguer" aria-label="Abrir menu" aria-expanded="false" aria-controls="menu">
+        <span></span><span></span><span></span>
+      </button>
+
+      <div class="menu-mais">
+        <button class="mais" id="mais" aria-label="Mais opções" aria-expanded="false" aria-haspopup="true">
+          <span></span><span></span><span></span>
+        </button>
+        <div class="mais__caixa" id="mais-caixa" role="menu" hidden>
+          <a class="mais__item" href="admin.html" role="menuitem">
+            Área dos noivos
+            <span class="mais__cadeado" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4">
+                <rect x="5" y="11" width="14" height="9" rx="1.5"/>
+                <path d="M8 11V8a4 4 0 0 1 8 0v3"/>
+              </svg>
+            </span>
+          </a>
+        </div>
+      </div>
+    </div>
+
     <nav aria-label="Menu principal">
       <ul class="topo__menu" id="menu">
         <li><a href="#historia">História</a></li>
@@ -105,72 +126,57 @@
         <p class="secao__texto" id="rsvp-texto"></p>
       </div>
 
-      <form class="formulario aparece" id="form-rsvp" novalidate>
+      <!-- 1. busca do convidado na lista -->
+      <div class="formulario aparece" id="rsvp-busca">
         <div class="campo">
-          <label class="campo__rotulo" for="rsvp-nome">Nome completo <span class="obrigatorio">*</span></label>
-          <input type="text" id="rsvp-nome" name="nome" required autocomplete="name" placeholder="Como está no convite">
-          <p class="campo__erro oculto" data-erro="nome"></p>
+          <label class="campo__rotulo" for="busca-nome">Digite seu nome <span class="obrigatorio">*</span></label>
+          <input type="text" id="busca-nome" autocomplete="off" autocapitalize="words"
+                 placeholder="Comece a digitar..." aria-describedby="busca-ajuda"
+                 role="combobox" aria-expanded="false" aria-controls="resultados" aria-autocomplete="list">
+          <p class="campo__ajuda" id="busca-ajuda">Basta o primeiro nome. Depois você confirma por toda a família.</p>
+        </div>
+        <div class="resultados" id="resultados" role="listbox" aria-label="Convidados encontrados"></div>
+      </div>
+
+      <!-- 2. confirmação da família -->
+      <form class="formulario oculto" id="form-rsvp" novalidate>
+        <button type="button" class="voltar" id="rsvp-voltar">&larr; Não sou eu, buscar de novo</button>
+
+        <div class="familia__cabecalho">
+          <span class="secao__olho">Sua família</span>
+          <h3 class="familia__titulo" id="familia-titulo"></h3>
+          <p class="campo__ajuda" id="familia-ajuda"></p>
         </div>
 
-        <div class="campo-duplo">
-          <div class="campo">
-            <label class="campo__rotulo" for="rsvp-telefone">WhatsApp <span class="obrigatorio">*</span></label>
-            <input type="tel" id="rsvp-telefone" name="telefone" required autocomplete="tel" placeholder="(31) 99999-9999" inputmode="tel">
-            <p class="campo__erro oculto" data-erro="telefone"></p>
-          </div>
-          <div class="campo">
-            <label class="campo__rotulo" for="rsvp-email">E-mail</label>
-            <input type="email" id="rsvp-email" name="email" autocomplete="email" placeholder="opcional">
-          </div>
+        <div class="pessoas" id="pessoas"></div>
+
+        <div class="campo">
+          <label class="campo__rotulo" for="rsvp-telefone">Seu WhatsApp <span class="obrigatorio">*</span></label>
+          <input type="tel" id="rsvp-telefone" required autocomplete="tel" placeholder="(21) 99999-9999" inputmode="tel">
+          <p class="campo__ajuda">Só para falarmos com você se precisarmos.</p>
+          <p class="campo__erro oculto" data-erro="telefone"></p>
         </div>
 
         <div class="campo">
-          <span class="campo__rotulo">Você vai poder vir? <span class="obrigatorio">*</span></span>
-          <div class="escolha">
-            <label>
-              <input type="radio" name="presenca" value="sim" checked>
-              <span>Sim, estarei lá</span>
-            </label>
-            <label>
-              <input type="radio" name="presenca" value="nao">
-              <span>Infelizmente não vou poder</span>
-            </label>
-          </div>
-        </div>
-
-        <div id="bloco-acompanhantes">
-          <div class="campo">
-            <label class="campo__rotulo" for="rsvp-qtd">Quantas pessoas vão com você?</label>
-            <select id="rsvp-qtd" name="quantidade"></select>
-            <p class="campo__ajuda">Conte apenas os acompanhantes, sem incluir você.</p>
-          </div>
-
-          <div class="campo oculto" id="campo-nomes">
-            <label class="campo__rotulo">Nome dos acompanhantes</label>
-            <div class="acompanhantes__lista" id="acompanhantes"></div>
-          </div>
-
-          <div class="campo">
-            <label class="campo__rotulo" for="rsvp-restricao">Alguma restrição alimentar?</label>
-            <input type="text" id="rsvp-restricao" name="restricao" placeholder="Ex.: vegetariano, sem lactose, sem glúten">
-            <p class="campo__ajuda">Vale para você e seus acompanhantes.</p>
-          </div>
+          <label class="campo__rotulo" for="rsvp-restricao">Alguma restrição alimentar na família?</label>
+          <input type="text" id="rsvp-restricao" placeholder="Ex.: Érika é vegetariana, Lucca não come glúten">
         </div>
 
         <div class="campo">
           <label class="campo__rotulo" for="rsvp-mensagem">Quer deixar um recado?</label>
-          <textarea id="rsvp-mensagem" name="mensagem" placeholder="Opcional"></textarea>
+          <textarea id="rsvp-mensagem" placeholder="Opcional"></textarea>
         </div>
 
         <button type="submit" class="botao botao--largo" id="rsvp-enviar">Enviar confirmação</button>
         <p class="campo__ajuda" style="text-align:center" id="rsvp-prazo"></p>
       </form>
 
+      <!-- 3. sucesso -->
       <div class="formulario oculto" id="rsvp-sucesso" style="text-align:center">
         <div class="ornamento" aria-hidden="true"><span class="sprig"></span></div>
         <h3 style="font-family:var(--fonte-titulo);font-size:1.8rem;margin:1.2rem 0 .6rem" id="sucesso-titulo"></h3>
         <p style="color:var(--cor-texto-suave)" id="sucesso-texto"></p>
-        <button class="botao botao--vazado botao--pequeno" id="rsvp-novo" style="margin-top:1rem">Confirmar outra pessoa</button>
+        <button class="botao botao--vazado botao--pequeno" id="rsvp-novo" style="margin-top:1.2rem">Confirmar outra família</button>
       </div>
     </div>
   </section>
@@ -263,6 +269,7 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="assets/js/conteudo.js"></script>
+<script src="assets/js/convidados.js"></script>
 <script src="assets/js/firebase-config.js"></script>
 <script src="assets/js/pix.js"></script>
 <script src="assets/js/dados.js"></script>

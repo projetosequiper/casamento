@@ -237,6 +237,22 @@
       botao.setAttribute('aria-expanded', 'false');
       document.body.style.overflow = '';
     });
+
+    /* menu dos três pontos */
+    var mais = $('#mais'), caixa = $('#mais-caixa');
+    function fecharMais() { caixa.hidden = true; mais.setAttribute('aria-expanded', 'false'); }
+    mais.addEventListener('click', function (e) {
+      e.stopPropagation();
+      var abrir = caixa.hidden;
+      caixa.hidden = !abrir;
+      mais.setAttribute('aria-expanded', abrir);
+    });
+    document.addEventListener('click', function (e) {
+      if (!caixa.hidden && !caixa.contains(e.target)) fecharMais();
+    });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') fecharMais();
+    });
   })();
 
   /* ---------- animação de entrada ---------- */
@@ -253,37 +269,175 @@
   })();
 
   /* ============================================================
-     4. CONFIRMAÇÃO DE PRESENÇA
+     4. CONFIRMAÇÃO DE PRESENÇA (lista fechada, por família)
      ============================================================ */
   (function () {
-    var form = $('#form-rsvp');
-    var qtd  = $('#rsvp-qtd');
-    var max  = C.rsvp.maxAcompanhantes || 0;
+    var SEMENTE = window.CONVIDADOS || [];
+    var LISTA = SEMENTE;
+    var familiaAtual = null;
 
-    for (var i = 0; i <= max; i++) {
-      var o = document.createElement('option');
-      o.value = i;
-      o.textContent = i === 0 ? 'Vou sozinho(a)' : (i + (i === 1 ? ' acompanhante' : ' acompanhantes'));
-      qtd.appendChild(o);
+    /* tira acentos e deixa minúsculo, para a busca não depender disso */
+    function simplificar(t) {
+      return String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+             .toLowerCase().replace(/\s+/g, ' ').trim();
     }
 
-    function montarNomes() {
-      var n = Number(qtd.value), caixa = $('#acompanhantes');
-      $('#campo-nomes').classList.toggle('oculto', n === 0);
-      caixa.innerHTML = '';
-      for (var i = 1; i <= n; i++) {
-        var inp = document.createElement('input');
-        inp.type = 'text'; inp.placeholder = 'Nome do acompanhante ' + i;
-        inp.className = 'acompanhante'; inp.autocomplete = 'off';
-        caixa.appendChild(inp);
-      }
-    }
-    qtd.addEventListener('change', montarNomes);
-
-    $$('input[name=presenca]').forEach(function (r) {
-      r.addEventListener('change', function () {
-        $('#bloco-acompanhantes').classList.toggle('oculto', this.value === 'nao');
+    function normalizarPessoas(fam) {
+      return (fam.pessoas || []).map(function (p) {
+        return typeof p === 'string' ? { nome: p } : p;
       });
+    }
+
+    /* índice de busca: cada pessoa com os termos que a encontram */
+    var INDICE = [];
+    function montarIndice() {
+      INDICE = [];
+      LISTA.forEach(function (fam) {
+        normalizarPessoas(fam).forEach(function (pessoa, i) {
+          INDICE.push({
+            familia: fam,
+            indice: i,
+            nome: pessoa.nome,
+            termos: [simplificar(pessoa.nome)].concat((pessoa.apelidos || []).map(simplificar))
+          });
+        });
+      });
+    }
+    montarIndice();
+
+    /* a lista publicada no painel manda; sem ela, usa o convidados.js */
+    DADOS.ouvirFamilias(function (mapa) {
+      var chaves = Object.keys(mapa || {});
+      LISTA = chaves.length
+        ? chaves.map(function (k) { return Object.assign({ id: k }, mapa[k]); })
+                .sort(function (a, b) { return (a.ordem || 0) - (b.ordem || 0); })
+        : SEMENTE;
+      montarIndice();
+    });
+
+    function nomeFamilia(fam) {
+      if (fam.rotulo) return fam.rotulo;
+      var p = normalizarPessoas(fam)[0];
+      return p ? p.nome.split(' ')[0] : '';
+    }
+
+    /* ---------- busca ---------- */
+    var campo = $('#busca-nome');
+    var caixa = $('#resultados');
+
+    function buscar(texto) {
+      var q = simplificar(texto);
+      if (q.length < 2) return [];
+      return INDICE.filter(function (x) {
+        return x.termos.some(function (termo) {
+          // casa com o começo de qualquer palavra do nome
+          return termo === q || termo.indexOf(q) === 0 ||
+                 termo.split(' ').some(function (parte) { return parte.indexOf(q) === 0; });
+        });
+      }).slice(0, 8);
+    }
+
+    function pintarResultados(texto) {
+      var achados = buscar(texto);
+      campo.setAttribute('aria-expanded', achados.length > 0);
+
+      if (simplificar(texto).length < 2) { caixa.innerHTML = ''; return; }
+
+      if (!achados.length) {
+        caixa.innerHTML =
+          '<p class="resultados__vazio">Não encontramos esse nome na lista.<br>' +
+          'Tente só o primeiro nome, ou ' +
+          (C.contato.whatsapp
+            ? '<a href="https://wa.me/' + escapar(C.contato.whatsapp) + '" target="_blank" rel="noopener">fale com a gente</a>.'
+            : 'fale com os noivos.') +
+          '</p>';
+        return;
+      }
+
+      caixa.innerHTML = achados.map(function (x) {
+        var outros = normalizarPessoas(x.familia).length - 1;
+        return '<button type="button" class="resultado" role="option" ' +
+               'data-familia="' + escapar(x.familia.id) + '" ' +
+               'data-pessoa="' + escapar(x.nome) + '">' +
+               '<span class="resultado__nome">' + escapar(x.nome) + '</span>' +
+               (outros > 0
+                 ? '<span class="resultado__extra">com mais ' + outros +
+                   (outros === 1 ? ' pessoa' : ' pessoas') + '</span>'
+                 : '<span class="resultado__extra">convite individual</span>') +
+               '</button>';
+      }).join('');
+    }
+
+    var atraso;
+    campo.addEventListener('input', function () {
+      clearTimeout(atraso);
+      var v = this.value;
+      atraso = setTimeout(function () { pintarResultados(v); }, 140);
+    });
+
+    /* Enter com um único resultado já abre a família */
+    campo.addEventListener('keydown', function (e) {
+      if (e.key !== 'Enter') return;
+      e.preventDefault();
+      var botoes = $$('.resultado');
+      if (botoes.length === 1) botoes[0].click();
+    });
+
+    caixa.addEventListener('click', function (e) {
+      var b = e.target.closest('[data-familia]');
+      if (b) abrirFamilia(b.dataset.familia, b.dataset.pessoa);
+    });
+
+    /* ---------- painel da família ---------- */
+    var quemBuscou = '';
+
+    function abrirFamilia(id, pessoa) {
+      familiaAtual = LISTA.filter(function (f) { return f.id === id; })[0];
+      if (!familiaAtual) return;
+      quemBuscou = pessoa || '';
+
+      var pessoas = normalizarPessoas(familiaAtual);
+
+      $('#familia-titulo').textContent = pessoas.length > 1
+        ? 'Família ' + nomeFamilia(familiaAtual)
+        : pessoas[0].nome;
+
+      $('#familia-ajuda').textContent = pessoas.length > 1
+        ? 'Marque quem vai poder ir. Já deixamos todos marcados — é só desmarcar quem não puder.'
+        : 'Confirme se você vai poder ir.';
+
+      $('#pessoas').innerHTML = pessoas.map(function (p, i) {
+        return '<label class="pessoa">' +
+                 '<input type="checkbox" class="pessoa__check" data-nome="' + escapar(p.nome) + '" ' +
+                 'data-crianca="' + (p.crianca ? '1' : '') + '" checked>' +
+                 '<span class="pessoa__marca" aria-hidden="true"></span>' +
+                 '<span class="pessoa__nome">' + escapar(p.nome) +
+                   (p.crianca ? '<span class="pessoa__tag">criança</span>' : '') + '</span>' +
+                 '<span class="pessoa__estado"></span>' +
+               '</label>';
+      }).join('');
+
+      atualizarEstados();
+
+      $('#rsvp-busca').classList.add('oculto');
+      $('#form-rsvp').classList.remove('oculto');
+      $('#form-rsvp').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    function atualizarEstados() {
+      $$('.pessoa').forEach(function (l) {
+        var vai = l.querySelector('.pessoa__check').checked;
+        l.classList.toggle('pessoa--fora', !vai);
+        l.querySelector('.pessoa__estado').textContent = vai ? 'Vai' : 'Não vai';
+      });
+    }
+    $('#pessoas').addEventListener('change', atualizarEstados);
+
+    $('#rsvp-voltar').addEventListener('click', function () {
+      $('#form-rsvp').classList.add('oculto');
+      $('#rsvp-busca').classList.remove('oculto');
+      campo.value = ''; caixa.innerHTML = '';
+      campo.focus();
     });
 
     /* máscara de telefone */
@@ -295,53 +449,60 @@
       this.value = v;
     });
 
-    function erro(campo, msg) {
-      var el = form.querySelector('[data-erro="' + campo + '"]');
+    function erro(campoNome, msg) {
+      var el = $('#form-rsvp').querySelector('[data-erro="' + campoNome + '"]');
       if (!el) return;
       el.textContent = msg || '';
       el.classList.toggle('oculto', !msg);
     }
 
-    form.addEventListener('submit', function (e) {
+    /* ---------- envio ---------- */
+    $('#form-rsvp').addEventListener('submit', function (e) {
       e.preventDefault();
-      erro('nome', ''); erro('telefone', '');
+      erro('telefone', '');
 
-      var nome = $('#rsvp-nome').value.trim();
-      var tel  = $('#rsvp-telefone').value.replace(/\D/g, '');
-      var vem  = form.querySelector('input[name=presenca]:checked').value === 'sim';
-      var ok = true;
+      var tel = $('#rsvp-telefone').value.replace(/\D/g, '');
+      if (tel.length < 10) {
+        erro('telefone', 'Informe um número com DDD.');
+        return $('#rsvp-telefone').focus();
+      }
 
-      if (nome.length < 3)  { erro('nome', 'Por favor, escreva seu nome completo.'); ok = false; }
-      if (tel.length < 10)  { erro('telefone', 'Informe um número com DDD.'); ok = false; }
-      if (!ok) return;
-
-      var acomp = $$('.acompanhante').map(function (i) { return i.value.trim(); }).filter(Boolean);
+      var pessoas = $$('.pessoa__check').map(function (c) {
+        return { nome: c.dataset.nome, vai: c.checked, crianca: c.dataset.crianca === '1' };
+      });
+      var vao = pessoas.filter(function (p) { return p.vai; });
 
       var dados = {
-        nome: nome,
+        familia: familiaAtual.id,
+        respondidoPor: quemBuscou || pessoas[0].nome,
         telefone: $('#rsvp-telefone').value,
-        email: $('#rsvp-email').value.trim(),
-        presenca: vem ? 'sim' : 'nao',
-        acompanhantes: vem ? acomp : [],
-        quantidade: vem ? Number(qtd.value) : 0,
-        restricao: vem ? $('#rsvp-restricao').value.trim() : '',
-        mensagem: $('#rsvp-mensagem').value.trim()
+        pessoas: pessoas,
+        restricao: $('#rsvp-restricao').value.trim(),
+        mensagem: $('#rsvp-mensagem').value.trim(),
+        atualizadoEm: Date.now()
       };
 
       var botao = $('#rsvp-enviar');
       botao.disabled = true;
       botao.textContent = 'Enviando...';
 
-      DADOS.salvarConfirmacao(dados).then(function () {
-        form.classList.add('oculto');
-        var box = $('#rsvp-sucesso');
-        box.classList.remove('oculto');
-        $('#sucesso-titulo').textContent = vem ? 'Que alegria!' : 'Obrigado por avisar';
-        $('#sucesso-texto').textContent = vem
-          ? 'Sua presença está confirmada' + (dados.quantidade ? ' para ' + (dados.quantidade + 1) + ' pessoas' : '') +
-            '. Já estamos ansiosos para te ver lá.'
-          : 'Vamos sentir sua falta, mas obrigado por nos avisar com carinho.';
-        box.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      DADOS.salvarConfirmacao(familiaAtual.id, dados).then(function () {
+        $('#form-rsvp').classList.add('oculto');
+        $('#rsvp-sucesso').classList.remove('oculto');
+
+        if (vao.length) {
+          $('#sucesso-titulo').textContent = 'Que alegria!';
+          $('#sucesso-texto').textContent =
+            (vao.length === 1
+              ? vao[0].nome + ' está confirmado(a)'
+              : vao.length + ' pessoas confirmadas: ' + vao.map(function (p) { return p.nome; }).join(', ')) +
+            '. Já estamos ansiosos para ver vocês lá. Se algo mudar, é só voltar aqui e confirmar de novo.';
+        } else {
+          $('#sucesso-titulo').textContent = 'Obrigado por avisar';
+          $('#sucesso-texto').textContent =
+            'Vamos sentir sua falta, mas agradecemos por nos avisar com carinho.';
+        }
+        $('#rsvp-sucesso').scrollIntoView({ behavior: 'smooth', block: 'center' });
       }).catch(function (err) {
         console.error(err);
         aviso('Não conseguimos enviar. Tente de novo em instantes.', true);
@@ -352,12 +513,11 @@
     });
 
     $('#rsvp-novo').addEventListener('click', function () {
-      form.reset();
-      montarNomes();
-      $('#bloco-acompanhantes').classList.remove('oculto');
+      $('#form-rsvp').reset();
       $('#rsvp-sucesso').classList.add('oculto');
-      form.classList.remove('oculto');
-      $('#rsvp-nome').focus();
+      $('#rsvp-busca').classList.remove('oculto');
+      campo.value = ''; caixa.innerHTML = '';
+      campo.focus();
     });
   })();
 
@@ -365,26 +525,44 @@
      5. LISTA DE PRESENTES
      ============================================================ */
   (function () {
-    var itens = C.presentes.itens || [];
+    var padrao = (C.presentes.itens || []).map(function (i, n) {
+      return Object.assign({ ordem: n }, i);
+    });
+    var itens = padrao;
     var reservados = {};
     var filtro = 'todos';
 
+    /* o catálogo publicado no painel manda; sem ele, usa a lista de exemplo */
+    DADOS.ouvirCatalogo(function (cat) {
+      var chaves = Object.keys(cat || {});
+      itens = chaves.length
+        ? chaves.map(function (k) { return Object.assign({ id: k }, cat[k]); })
+                .filter(function (i) { return i.ativo !== false; })
+                .sort(function (a, b) { return (a.ordem || 0) - (b.ordem || 0); })
+        : padrao;
+      montarFiltros();
+      pintar();
+    });
+
     /* filtros por categoria */
-    (function () {
+    function montarFiltros() {
       var cats = ['todos'].concat(itens.map(function (i) { return i.categoria; })
                  .filter(function (v, i, a) { return v && a.indexOf(v) === i; }));
+      if (cats.indexOf(filtro) === -1) filtro = 'todos';
       $('#filtros').innerHTML = cats.map(function (c) {
         return '<button class="filtro" data-cat="' + escapar(c) + '" aria-pressed="' +
-               (c === 'todos') + '">' + escapar(c === 'todos' ? 'Todos' : c) + '</button>';
+               (c === filtro) + '">' + escapar(c === 'todos' ? 'Todos' : c) + '</button>';
       }).join('');
-      $('#filtros').addEventListener('click', function (e) {
-        var b = e.target.closest('.filtro');
-        if (!b) return;
-        filtro = b.dataset.cat;
-        $$('.filtro').forEach(function (x) { x.setAttribute('aria-pressed', x === b); });
-        pintar();
-      });
-    })();
+    }
+    montarFiltros();
+
+    $('#filtros').addEventListener('click', function (e) {
+      var b = e.target.closest('.filtro');
+      if (!b) return;
+      filtro = b.dataset.cat;
+      $$('.filtro').forEach(function (x) { x.setAttribute('aria-pressed', x === b); });
+      pintar();
+    });
 
     function pintar() {
       var lista = itens.filter(function (i) { return filtro === 'todos' || i.categoria === filtro; });

@@ -17,6 +17,15 @@ window.CONTEUDO = {
     monograma: ''               // vazio = monta sozinho com as iniciais (Y & J)
   },
 
+  /* ---------- ÁREA DOS NOIVOS ----------
+     A senha NÃO fica aqui: quem valida é o Firebase.
+     Este e-mail é o do usuário que você criou no Firebase
+     (Authentication › Users). A senha desse usuário é a senha
+     que vocês digitam na tela de entrada do painel.            */
+  painel: {
+    email: 'noivos@yanneejulio.com'          // TROCAR pelo e-mail criado no Firebase
+  },
+
   /* ---------- CAPA ----------
      foto: caminho ou link de uma foto horizontal do casal.
      Vazio = capa clara, no estilo de um convite impresso.        */
@@ -27,7 +36,7 @@ window.CONTEUDO = {
   dataHora: '2027-11-01T16:00:00-03:00',
   dataPorExtenso: '1º de novembro de 2027',
   diaSemana: 'Segunda-feira',
-  cidade: 'Cidade/UF',                     // TROCAR
+  cidade: 'Itaipava, Petrópolis — RJ',
 
   /* ---------- FRASE DE ABERTURA ---------- */
   frase: 'Vamos nos casar, e queremos você por perto.',
@@ -45,40 +54,43 @@ window.CONTEUDO = {
     ]
   },
 
-  /* ---------- CERIMÔNIA E FESTA ---------- */
+  /* ---------- CERIMÔNIA E FESTA ----------
+     Cerimônia e recepção acontecem no mesmo endereço.
+     CONFERIR os horários abaixo — ainda são estimativas.        */
   eventos: [
     {
       tipo: 'Cerimônia',
-      horario: '16h00',
-      local: 'Igreja Nossa Senhora do Carmo',            // TROCAR
-      endereco: 'Rua Exemplo, 123 — Bairro, Cidade/UF',  // TROCAR
-      observacao: 'Pedimos a gentileza de chegar 30 minutos antes.',
-      mapa: 'https://www.google.com/maps/search/?api=1&query=Igreja+Nossa+Senhora+do+Carmo'
+      horario: '16h00',                                  // CONFERIR
+      local: 'Casa do Lago | Enfesta',
+      endereco: 'BR-040, Km 69 — Itaipava, Petrópolis/RJ · CEP 25665-060',
+      observacao: 'Depois da antiga fábrica de café solúvel. ' +
+                  'Pedimos a gentileza de chegar 30 minutos antes.',
+      mapa: 'https://www.google.com/maps/search/?api=1&query=Casa+do+Lago+Enfesta+BR-040+Km+69+Itaipava+Petr%C3%B3polis+RJ'
     },
     {
       tipo: 'Recepção',
-      horario: '18h30',
-      local: 'Espaço Jardim das Acácias',                // TROCAR
-      endereco: 'Av. Exemplo, 456 — Bairro, Cidade/UF',  // TROCAR
-      observacao: 'Estacionamento no local com manobrista.',
-      mapa: 'https://www.google.com/maps/search/?api=1&query=Espaco+Jardim+das+Acacias'
+      horario: '18h00',                                  // CONFERIR
+      local: 'Casa do Lago | Enfesta',
+      endereco: 'No mesmo endereço, logo após a cerimônia — sem deslocamento.',
+      observacao: 'Estacionamento no local.',            // CONFERIR
+      mapa: ''
     }
   ],
 
   /* ---------- INFORMAÇÕES PRÁTICAS ---------- */
   informacoes: [
     { icone: 'traje',      titulo: 'Traje',       texto: 'Esporte fino. Evitem branco e off-white — cores reservadas à noiva.' },
-    { icone: 'hospedagem', titulo: 'Hospedagem',  texto: 'Reservamos tarifas especiais no Hotel Exemplo. Citem o nome dos noivos na reserva.' },
-    { icone: 'transporte', titulo: 'Transporte',  texto: 'Haverá van saindo do hotel às 15h15 e retornando ao fim da festa.' },
+    { icone: 'hospedagem', titulo: 'Onde ficar',  texto: 'Itaipava e o centro de Petrópolis têm boas pousadas a poucos minutos do local. Em breve deixamos aqui algumas sugestões com desconto.' },   // CONFERIR
+    { icone: 'transporte', titulo: 'Como chegar', texto: 'Cerca de 1h20 saindo do Rio pela BR-040, na altura do Km 69. A serra costuma ter neblina no fim da tarde — vá com calma e saia com folga.' },
     { icone: 'criancas',   titulo: 'Crianças',    texto: 'Teremos espaço kids com recreação durante toda a festa.' }
   ],
 
   /* ---------- CONFIRMAÇÃO DE PRESENÇA ---------- */
   rsvp: {
     titulo: 'Confirme sua presença',
-    texto: 'Precisamos da sua confirmação para organizar as mesas e o buffet.',
-    prazo: '1º de outubro de 2027',
-    maxAcompanhantes: 4
+    texto: 'Procure seu nome na lista de convidados e confirme por você e por quem vem com você. ' +
+           'Se algo mudar, é só voltar aqui e confirmar de novo.',
+    prazo: '1º de outubro de 2027'
   },
 
   /* ---------- LISTA DE PRESENTES ----------
@@ -134,7 +146,9 @@ window.CONTEUDO = {
   faq: [
     { p: 'Posso levar acompanhante?', r: 'O convite indica quantos lugares foram reservados para você. Na dúvida, é só perguntar na confirmação de presença.' },
     { p: 'Até quando confirmo presença?', r: 'Até 1º de outubro de 2027. Depois dessa data não conseguimos mais incluir no buffet.' },
-    { p: 'Tem estacionamento?', r: 'Sim, com manobrista no local da recepção.' },
+    { p: 'Tem estacionamento?', r: 'Sim, no próprio local.' },
+    { p: 'Preciso me deslocar entre a cerimônia e a festa?', r: 'Não. Tudo acontece na Casa do Lago, em Itaipava — a festa começa logo depois da cerimônia.' },
+    { p: 'Faz frio em Petrópolis?', r: 'Em novembro as noites na serra ficam frescas. Vale levar um casaco leve, principalmente se a cerimônia for ao ar livre.' },
     { p: 'Posso tirar fotos durante a cerimônia?', r: 'Pedimos que a cerimônia seja sem celulares — temos fotógrafo. Na festa, fotografem à vontade!' }
   ],
 

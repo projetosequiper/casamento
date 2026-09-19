@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Painel dos noivos</title>
+  <title>Área dos noivos</title>
   <meta name="robots" content="noindex, nofollow">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍃</text></svg>">
   <link rel="stylesheet" href="assets/css/tema.css">
@@ -11,7 +11,7 @@
   <style>
     body { background: var(--cor-fundo-alt); }
 
-    .painel { max-width: 1180px; margin-inline: auto; padding: 1.5rem clamp(1rem,4vw,2rem) 4rem; }
+    .painel { max-width: 1240px; margin-inline: auto; padding: 1.5rem clamp(1rem,4vw,2rem) 5rem; }
 
     .painel__topo {
       display: flex; align-items: center; justify-content: space-between;
@@ -20,20 +20,25 @@
     .painel__topo h1 { font-size: 1.9rem; }
     .painel__topo p { margin: .2rem 0 0; font-size: .85rem; color: var(--cor-texto-suave); }
 
-    .numeros { display: grid; grid-template-columns: repeat(auto-fit,minmax(150px,1fr)); gap: 1rem; margin-bottom: 2rem; }
+    .numeros { display: grid; grid-template-columns: repeat(auto-fit,minmax(160px,1fr)); gap: 1rem; margin-bottom: 2rem; }
     .numero {
       background: var(--cor-superficie); border: 1px solid var(--cor-borda);
       border-radius: var(--raio-grande); padding: 1.25rem 1.4rem;
     }
     .numero strong {
-      display: block; font-family: var(--fonte-titulo); font-size: 2.3rem;
-      line-height: 1; font-weight: 400; font-variant-numeric: tabular-nums;
+      display: block; font-family: var(--fonte-titulo); font-size: 2.2rem;
+      line-height: 1.05; font-weight: 400; font-variant-numeric: tabular-nums;
     }
     .numero span {
-      font-size: var(--t-micro); letter-spacing: .12em; text-transform: uppercase;
+      font-size: var(--t-micro); letter-spacing: .1em; text-transform: uppercase;
       color: var(--cor-texto-suave); display: block; margin-top: .45rem;
     }
+    .numero small { display: block; font-size: .78rem; color: var(--cor-texto-suave); margin-top: .3rem; }
     .numero--destaque strong { color: var(--cor-destaque); }
+    .numero--alerta strong { color: var(--cor-erro); }
+
+    .barra-prog { height: 5px; background: var(--cor-borda); border-radius: 100px; margin-top: .8rem; overflow: hidden; }
+    .barra-prog i { display: block; height: 100%; background: var(--cor-destaque); border-radius: 100px; }
 
     .abas { display: flex; gap: .4rem; flex-wrap: wrap; margin-bottom: 1.2rem; }
     .aba {
@@ -63,28 +68,82 @@
     }
     tbody tr:last-child td { border-bottom: 0; }
     tbody tr:hover { background: var(--cor-fundo); }
+    tfoot td { font-weight: 500; border-top: 2px solid var(--cor-borda); background: var(--cor-fundo); }
 
     .etiqueta {
       display: inline-block; font-size: .72rem; letter-spacing: .06em;
       padding: .2rem .6rem; border-radius: 100px; white-space: nowrap;
     }
-    .etiqueta--sim  { background: #e4ede4; color: #3f5c40; }
-    .etiqueta--nao  { background: #f4e2e0; color: #8f4840; }
-    .etiqueta--pago { background: var(--cor-destaque-suave); color: var(--cor-destaque-escuro); }
+    .etiqueta--sim    { background: #e4ede4; color: #3f5c40; }
+    .etiqueta--nao    { background: #f4e2e0; color: #8f4840; }
+    .etiqueta--pago   { background: var(--cor-destaque-suave); color: var(--cor-destaque-escuro); }
+    .etiqueta--espera { background: #efeade; color: #8a7a55; }
 
     .mini {
       background: none; border: 1px solid var(--cor-borda); border-radius: var(--raio);
       padding: .3rem .7rem; font-size: .78rem; cursor: pointer; white-space: nowrap;
+      text-decoration: none; color: inherit; display: inline-block;
       transition: all var(--transicao);
     }
     .mini:hover { border-color: var(--cor-destaque); color: var(--cor-destaque); }
     .mini--perigo:hover { border-color: var(--cor-erro); color: var(--cor-erro); }
+    .mini--forte { background: var(--cor-destaque); border-color: var(--cor-destaque); color: #fff; }
+    .mini--forte:hover { background: var(--cor-destaque-escuro); border-color: var(--cor-destaque-escuro); color: #fff; }
 
     .vazio { padding: 3rem 1rem; text-align: center; color: var(--cor-texto-suave); font-style: italic; }
 
-    .login { max-width: 400px; margin: 12vh auto; }
-    .login h1 { font-size: 1.7rem; text-align: center; margin-bottom: .4rem; }
-    .login p  { text-align: center; color: var(--cor-texto-suave); font-size: .9rem; margin: 0 0 1.8rem; }
+    .bloco {
+      background: var(--cor-superficie); border: 1px solid var(--cor-borda);
+      border-radius: var(--raio-grande); padding: clamp(1.2rem,3vw,1.8rem); margin-bottom: 1.5rem;
+    }
+    .bloco h2 { font-size: 1.35rem; margin-bottom: .3rem; }
+    .bloco__sub { font-size: .86rem; color: var(--cor-texto-suave); margin: 0 0 1.2rem; }
+
+    /* entrada por senha */
+    .entrada { max-width: 380px; margin: 14vh auto 0; text-align: center; }
+    .entrada .monograma { font-size: 3.4rem; margin-bottom: .2rem; }
+    .entrada h1 { font-size: 1.5rem; margin-bottom: .3rem; }
+    .entrada p { color: var(--cor-texto-suave); font-size: .88rem; margin: 0 0 1.8rem; }
+    .entrada input {
+      width: 100%; text-align: center;
+      font-family: var(--fonte-titulo); font-size: 2rem; letter-spacing: .5em;
+      text-indent: .5em;
+      background: var(--cor-fundo); border: 1px solid var(--cor-borda);
+      border-radius: var(--raio); padding: .8rem .5rem; color: var(--cor-texto);
+    }
+    .entrada input:focus { outline: none; border-color: var(--cor-destaque); box-shadow: 0 0 0 3px var(--cor-destaque-suave); }
+
+    .editor-pessoas { display: grid; gap: .5rem; margin-bottom: .6rem; }
+    .linha-pessoa { display: flex; align-items: center; gap: .5rem; }
+    .linha-pessoa input[type=text] {
+      flex: 1; background: var(--cor-fundo); border: 1px solid var(--cor-borda);
+      border-radius: var(--raio); padding: .7rem .9rem; font: inherit; color: var(--cor-texto);
+    }
+    .linha-pessoa input[type=text]:focus {
+      outline: none; border-color: var(--cor-destaque); box-shadow: 0 0 0 3px var(--cor-destaque-suave);
+    }
+    .chip-crianca {
+      display: flex; align-items: center; gap: .4rem; white-space: nowrap;
+      border: 1px solid var(--cor-borda); border-radius: var(--raio);
+      padding: .55rem .7rem; cursor: pointer; font-size: .78rem;
+      color: var(--cor-texto-suave); transition: all var(--transicao);
+    }
+    .chip-crianca input { accent-color: var(--cor-destaque); }
+    .chip-crianca:has(input:checked) {
+      background: var(--cor-destaque-suave); border-color: var(--cor-destaque);
+      color: var(--cor-destaque-escuro);
+    }
+    .tirar-pessoa {
+      background: none; border: 0; cursor: pointer; font-size: 1.3rem; line-height: 1;
+      color: var(--cor-texto-suave); padding: .3rem .5rem; border-radius: var(--raio);
+    }
+    .tirar-pessoa:hover { color: var(--cor-erro); background: var(--cor-fundo-alt); }
+
+    .pilula {
+      display: inline-block; font-size: .72rem; letter-spacing: .04em;
+      background: var(--cor-destaque-suave); color: var(--cor-destaque-escuro);
+      border-radius: 100px; padding: .1rem .5rem; margin-left: .35rem;
+    }
 
     @media (max-width: 640px) {
       .painel__topo { padding-block: 1rem 1.4rem; }
@@ -94,21 +153,20 @@
 </head>
 <body>
 
-<!-- ============ LOGIN ============ -->
+<!-- ============ ENTRADA ============ -->
 <div class="painel oculto" id="tela-login">
-  <form class="formulario login" id="form-login">
-    <h1>Painel dos noivos</h1>
-    <p>Acesso restrito</p>
+  <form class="formulario entrada" id="form-login">
+    <span class="monograma" id="entrada-monograma" aria-hidden="true"></span>
+    <h1>Área dos noivos</h1>
+    <p>Digite a senha para continuar</p>
     <div class="campo">
-      <label class="campo__rotulo" for="email">E-mail</label>
-      <input type="email" id="email" required autocomplete="username">
-    </div>
-    <div class="campo">
-      <label class="campo__rotulo" for="senha">Senha</label>
-      <input type="password" id="senha" required autocomplete="current-password">
+      <label class="campo__rotulo oculto" for="senha">Senha</label>
+      <input type="password" id="senha" required inputmode="numeric" autocomplete="current-password"
+             placeholder="••••••" aria-label="Senha">
     </div>
     <button type="submit" class="botao botao--largo">Entrar</button>
     <p class="campo__erro oculto" id="erro-login" style="text-align:center"></p>
+    <p style="margin-top:1.5rem"><a href="index.html" class="mini">Voltar ao site</a></p>
   </form>
 </div>
 
@@ -117,10 +175,10 @@
 
   <div class="painel__topo">
     <div>
-      <h1 id="painel-titulo">Painel dos noivos</h1>
+      <h1 id="painel-titulo">Área dos noivos</h1>
       <p id="painel-sub"></p>
     </div>
-    <div style="display:flex;gap:.5rem">
+    <div style="display:flex;gap:.5rem;flex-wrap:wrap">
       <a class="mini" href="index.html">Ver o site</a>
       <button class="mini" id="sair">Sair</button>
     </div>
@@ -129,22 +187,90 @@
   <div class="numeros" id="numeros"></div>
 
   <div class="abas" role="tablist">
-    <button class="aba" role="tab" data-aba="confirmacoes" aria-selected="true">Confirmações</button>
-    <button class="aba" role="tab" data-aba="presentes"    aria-selected="false">Presentes</button>
+    <button class="aba" role="tab" data-aba="resumo"       aria-selected="true">Resumo</button>
+    <button class="aba" role="tab" data-aba="confirmacoes" aria-selected="false">Confirmações</button>
+    <button class="aba" role="tab" data-aba="convidados"   aria-selected="false">Convidados</button>
+    <button class="aba" role="tab" data-aba="presentes"    aria-selected="false">Presentes recebidos</button>
+    <button class="aba" role="tab" data-aba="catalogo"     aria-selected="false">Editar lista</button>
     <button class="aba" role="tab" data-aba="recados"      aria-selected="false">Recados</button>
   </div>
 
-  <div class="barra-acoes">
-    <input type="search" id="busca" placeholder="Buscar por nome...">
+  <div class="barra-acoes" id="barra-acoes">
+    <input type="search" id="busca" placeholder="Buscar...">
     <button class="mini" id="exportar">Baixar planilha (CSV)</button>
+    <button class="mini mini--forte oculto" id="novo-item">+ Novo presente</button>
+    <button class="mini mini--forte oculto" id="nova-familia">+ Nova família</button>
   </div>
 
-  <div class="tabela-caixa" id="tabela"></div>
+  <div id="conteudo-aba"></div>
+</div>
+
+<!-- ============ JANELA DE EDIÇÃO DE PRESENTE ============ -->
+<div class="janela" id="janela-item" role="dialog" aria-modal="true" aria-labelledby="item-titulo" hidden>
+  <div class="janela__caixa">
+    <button class="janela__fechar" id="item-fechar" aria-label="Fechar">&times;</button>
+    <h2 class="janela__titulo" id="item-titulo">Novo presente</h2>
+    <form id="form-item">
+      <div class="campo">
+        <label class="campo__rotulo" for="item-nome">Nome do presente <span class="obrigatorio">*</span></label>
+        <input type="text" id="item-nome" required placeholder="Ex.: Jogo de panelas">
+      </div>
+      <div class="campo-duplo">
+        <div class="campo">
+          <label class="campo__rotulo" for="item-valor">Valor (R$)</label>
+          <input type="number" id="item-valor" min="0" step="10" placeholder="450" inputmode="numeric">
+          <p class="campo__ajuda">Deixe 0 para "valor livre".</p>
+        </div>
+        <div class="campo">
+          <label class="campo__rotulo" for="item-categoria">Categoria</label>
+          <input type="text" id="item-categoria" list="categorias" placeholder="Cozinha">
+          <datalist id="categorias"></datalist>
+        </div>
+      </div>
+      <div class="campo">
+        <label class="campo__rotulo" for="item-descricao">Descrição</label>
+        <input type="text" id="item-descricao" placeholder="Opcional">
+      </div>
+      <div class="campo">
+        <label class="campo__rotulo" for="item-imagem">Link da foto</label>
+        <input type="text" id="item-imagem" placeholder="https://... (opcional)">
+        <p class="campo__ajuda">Pode ser o link da foto no site da loja.</p>
+      </div>
+      <button type="submit" class="botao botao--largo">Salvar presente</button>
+    </form>
+  </div>
+</div>
+
+<!-- ============ JANELA DE EDIÇÃO DE FAMÍLIA ============ -->
+<div class="janela" id="janela-familia" role="dialog" aria-modal="true" aria-labelledby="familia-janela-titulo" hidden>
+  <div class="janela__caixa">
+    <button class="janela__fechar" id="familia-fechar" aria-label="Fechar">&times;</button>
+    <h2 class="janela__titulo" id="familia-janela-titulo">Nova família</h2>
+    <p class="bloco__sub">Cada pessoa vira uma linha. Marque quem é criança —
+      isso separa a contagem para o buffet.</p>
+
+    <form id="form-familia">
+      <div class="campo">
+        <label class="campo__rotulo" for="familia-rotulo">Nome da família</label>
+        <input type="text" id="familia-rotulo" placeholder="Opcional — ex.: Dias, Tios do Júlio">
+        <p class="campo__ajuda">Se deixar vazio, usamos o primeiro nome da lista.</p>
+      </div>
+
+      <label class="campo__rotulo">Pessoas <span class="obrigatorio">*</span></label>
+      <div class="editor-pessoas" id="editor-pessoas"></div>
+      <button type="button" class="mini" id="add-pessoa" style="margin:.2rem 0 1.4rem">+ Adicionar pessoa</button>
+
+      <button type="submit" class="botao botao--largo">Salvar família</button>
+      <button type="button" class="mini mini--perigo oculto" id="excluir-familia"
+              style="width:100%;margin-top:.7rem;padding:.6rem">Excluir esta família</button>
+    </form>
+  </div>
 </div>
 
 <div class="aviso-flutuante" id="aviso" role="status" aria-live="polite"></div>
 
 <script src="assets/js/conteudo.js"></script>
+<script src="assets/js/convidados.js"></script>
 <script src="assets/js/firebase-config.js"></script>
 <script src="assets/js/dados.js"></script>
 <script src="assets/js/admin.js"></script>
