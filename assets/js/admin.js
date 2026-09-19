@@ -37,6 +37,48 @@
 
   function soDigitos(t) { return String(t || '').replace(/\D/g, ''); }
 
+  /* Confirmação própria: o confirm() do navegador é bloqueado quando o
+     painel roda dentro de um iframe (prévia), e some sem avisar. */
+  function perguntar(texto, rotulo) {
+    return new Promise(function (resolve) {
+      var j = $('#janela-confirma');
+      $('#confirma-texto').textContent = texto;
+      $('#confirma-sim').textContent = rotulo || 'Confirmar';
+      j.hidden = false;
+      requestAnimationFrame(function () { j.classList.add('janela--aberta'); });
+      document.body.style.overflow = 'hidden';
+
+      function fechar(resposta) {
+        j.classList.remove('janela--aberta');
+        setTimeout(function () { j.hidden = true; }, 250);
+        document.body.style.overflow = '';
+        $('#confirma-sim').onclick = null;
+        $('#confirma-nao').onclick = null;
+        document.removeEventListener('keydown', porTecla);
+        resolve(resposta);
+      }
+      function porTecla(e) { if (e.key === 'Escape') fechar(false); }
+
+      $('#confirma-sim').onclick = function () { fechar(true); };
+      $('#confirma-nao').onclick = function () { fechar(false); };
+      document.addEventListener('keydown', porTecla);
+      $('#confirma-sim').focus();
+    });
+  }
+
+  /* Mensagem de erro que diz o motivo de verdade */
+  function explicarErro(e) {
+    var m = (e && (e.message || e.code) || '').toLowerCase();
+    if (m.indexOf('permission') !== -1 || m.indexOf('denied') !== -1) {
+      return 'O Firebase recusou a gravação. Quase sempre é porque as regras do banco ' +
+             'estão desatualizadas — cole o database.rules.json novo em Realtime Database › Regras.';
+    }
+    if (m.indexOf('network') !== -1 || m.indexOf('offline') !== -1) {
+      return 'Sem conexão com o banco agora. Tente de novo em instantes.';
+    }
+    return 'Não conseguimos salvar. ' + (e && e.message ? e.message : '');
+  }
+
   /* ---------- helpers da lista de convidados ---------- */
   function pessoasDaFamilia(fam) {
     return (fam.pessoas || []).map(function (p) { return typeof p === 'string' ? { nome: p } : p; });
@@ -56,7 +98,7 @@
   function familiasPublicadas() { return Object.keys(estado.familias).length > 0; }
 
   /* ---------- estado ---------- */
-  var estado = { confirmacoes: {}, presentes: {}, recados: {}, catalogo: {}, familias: {} };
+  var estado = { confirmacoes: {}, presentes: {}, recados: {}, catalogo: {}, familias: {}, imagens: {} };
   var abaAtiva = 'resumo';
   var busca = '';
 
@@ -123,6 +165,7 @@
     DADOS.ouvirPresentes(function (d)    { estado.presentes    = d || {}; pintar(); });
     DADOS.ouvirRecados(function (d)      { estado.recados      = d || {}; pintar(); });
     DADOS.ouvirCatalogo(function (d)     { estado.catalogo     = d || {}; pintar(); });
+    DADOS.ouvirImagens(function (d)      { estado.imagens      = d || {}; pintar(); });
     DADOS.ouvirFamilias(function (d) {
       estado.familias = d || {};
       var chaves = Object.keys(estado.familias);
@@ -161,6 +204,31 @@
   }
   function catalogoPublicado() { return Object.keys(estado.catalogo).length > 0; }
 
+  /* ---------- contribuições nos presentes ----------
+     presentes/{item}/{contribuicao}. Aceita também o formato
+     antigo, de quando cada item tinha uma contribuição só.      */
+  function contribuicoesDe(idItem) {
+    var no = estado.presentes[idItem];
+    if (!no) return [];
+    if (typeof no.nome === 'string') return [Object.assign({ _id: 'antigo', cotas: 1 }, no)];
+    return Object.keys(no).map(function (k) {
+      return Object.assign({ _id: k, cotas: 1 }, no[k]);
+    });
+  }
+  function todasContribuicoes() {
+    var saida = [];
+    Object.keys(estado.presentes).forEach(function (idItem) {
+      contribuicoesDe(idItem).forEach(function (c) {
+        c._item = idItem;
+        saida.push(c);
+      });
+    });
+    return saida.sort(function (a, b) { return (b.reservadoEm || 0) - (a.reservadoEm || 0); });
+  }
+  function cotasTomadas(idItem) {
+    return contribuicoesDe(idItem).reduce(function (s, c) { return s + (Number(c.cotas) || 1); }, 0);
+  }
+
   /* ---------- contas ---------- */
   function contas() {
     var conf = estado.confirmacoes;
@@ -173,7 +241,7 @@
       });
     });
 
-    var pres = Object.keys(estado.presentes).map(function (k) { return estado.presentes[k]; });
+    var pres = todasContribuicoes();
     var totalEscolhido = pres.reduce(function (s, p) { return s + (Number(p.valor) || 0); }, 0);
     var recebido = pres.filter(function (p) { return p.pago; })
                        .reduce(function (s, p) { return s + (Number(p.valor) || 0); }, 0);
@@ -229,6 +297,10 @@
      ============================================================ */
   function pintar() {
     pintarNumeros();
+
+    /* se o usuário está digitando numa célula, não redesenha por baixo dele */
+    var foco = document.activeElement;
+    if (foco && foco.classList && foco.classList.contains('cota-inline')) return;
     $('#novo-item').classList.toggle('oculto', abaAtiva !== 'catalogo');
     $('#nova-familia').classList.toggle('oculto', abaAtiva !== 'convidados');
     $('#exportar').classList.toggle('oculto',
@@ -264,8 +336,10 @@
       porCat[cat] = porCat[cat] || { total: 0, valor: 0, dados: 0, valorDado: 0 };
       porCat[cat].total++;
       porCat[cat].valor += Number(i.valor) || 0;
-      var r = estado.presentes[i.id];
-      if (r) { porCat[cat].dados++; porCat[cat].valorDado += Number(r.valor) || 0; }
+      contribuicoesDe(i.id).forEach(function (c) {
+        porCat[cat].valorDado += Number(c.valor) || 0;
+      });
+      if (cotasTomadas(i.id) >= Math.max(1, Number(i.cotas) || 1)) porCat[cat].dados++;
     });
 
     var linhasCat = Object.keys(porCat).sort().map(function (cat) {
@@ -284,10 +358,7 @@
     var faltam = LISTA.filter(function (f) { return !estado.confirmacoes[f.id]; });
 
     /* últimos presentes */
-    var ultimos = Object.keys(estado.presentes)
-      .map(function (k) { return Object.assign({ _id: k }, estado.presentes[k]); })
-      .sort(function (a, b) { return (b.reservadoEm || 0) - (a.reservadoEm || 0); })
-      .slice(0, 5);
+    var ultimos = todasContribuicoes().slice(0, 5);
 
     $('#conteudo-aba').innerHTML =
       '<div class="bloco">' +
@@ -406,9 +477,7 @@
 
   /* ---------- PRESENTES RECEBIDOS ---------- */
   function pintarPresentes() {
-    var lista = Object.keys(estado.presentes)
-      .map(function (k) { return Object.assign({ _id: k }, estado.presentes[k]); })
-      .sort(function (a, b) { return (b.reservadoEm || 0) - (a.reservadoEm || 0); });
+    var lista = todasContribuicoes();
 
     if (busca) {
       lista = lista.filter(function (p) {
@@ -418,27 +487,36 @@
     if (!lista.length) return ($('#conteudo-aba').innerHTML = vazio('Nenhum presente escolhido ainda.'));
 
     var soma = lista.reduce(function (s, p) { return s + (Number(p.valor) || 0); }, 0);
+    var recebido = lista.filter(function (p) { return p.pago; })
+                        .reduce(function (s, p) { return s + (Number(p.valor) || 0); }, 0);
 
     $('#conteudo-aba').innerHTML = caixaTabela(
       '<table><thead><tr>' +
-        '<th>Presente</th><th>Valor</th><th>Quem deu</th><th>Mensagem</th>' +
+        '<th>Presente</th><th>Cotas</th><th>Valor</th><th>Quem deu</th><th>Mensagem</th>' +
         '<th>Escolhido em</th><th>Pagamento</th><th></th>' +
       '</tr></thead><tbody>' +
       lista.map(function (p) {
+        var item = estado.catalogo[p._item] || {};
+        var totalItem = Math.max(1, Number(item.cotas) || 1);
+        var qtd = Number(p.cotas) || 1;
         return '<tr>' +
           '<td><strong>' + escapar(p.presente) + '</strong></td>' +
+          '<td style="white-space:nowrap">' +
+            (totalItem > 1 ? qtd + ' de ' + totalItem : '&mdash;') + '</td>' +
           '<td style="white-space:nowrap">' + moeda.format(Number(p.valor) || 0) + '</td>' +
           '<td>' + escapar(p.nome) + '</td>' +
           '<td>' + escapar(p.mensagem || '—') + '</td>' +
           '<td style="white-space:nowrap">' + dataHora(p.reservadoEm) + '</td>' +
           '<td>' + (p.pago
               ? '<span class="etiqueta etiqueta--pago">Recebido</span>'
-              : '<button class="mini mini--forte" data-pago="' + escapar(p._id) + '">Confirmar recebimento</button>') + '</td>' +
-          '<td><button class="mini mini--perigo" data-liberar="' + escapar(p._id) + '">Devolver à lista</button></td>' +
+              : '<button class="mini mini--forte" data-pago="' + escapar(p._item) +
+                '" data-contrib="' + escapar(p._id) + '">Confirmar recebimento</button>') + '</td>' +
+          '<td><button class="mini mini--perigo" data-liberar="' + escapar(p._item) +
+            '" data-contrib="' + escapar(p._id) + '">Devolver à lista</button></td>' +
         '</tr>';
       }).join('') +
-      '</tbody><tfoot><tr><td>Total</td><td>' + moeda.format(soma) +
-      '</td><td colspan="5"></td></tr></tfoot></table>');
+      '</tbody><tfoot><tr><td colspan="2">Total</td><td>' + moeda.format(soma) +
+      '</td><td colspan="5">' + moeda.format(recebido) + ' já confirmado no extrato</td></tr></tfoot></table>');
   }
 
   /* ---------- EDITAR A LISTA DE PRESENTES ---------- */
@@ -468,19 +546,35 @@
 
     $('#conteudo-aba').innerHTML = caixaTabela(
       '<table><thead><tr>' +
-        '<th>Presente</th><th>Categoria</th><th>Valor</th><th>Situação</th><th>No site</th><th></th>' +
+        '<th></th><th>Presente</th><th>Categoria</th><th>Valor</th><th>Cotas</th><th>Situação</th><th>No site</th><th></th>' +
       '</tr></thead><tbody>' +
       itens.map(function (i) {
-        var dado = estado.presentes[i.id];
+        var foto = estado.imagens[i.id] || i.imagem || '';
+        var total = Math.max(1, Number(i.cotas) || 1);
+        var tomadas = cotasTomadas(i.id);
+        var quem = contribuicoesDe(i.id).map(function (c) { return c.nome; });
         return '<tr>' +
+          '<td>' + (foto
+            ? '<img src="' + escapar(foto) + '" alt="" style="width:52px;height:39px;object-fit:cover;border-radius:2px">'
+            : '<span style="color:var(--cor-borda)">—</span>') + '</td>' +
           '<td><strong>' + escapar(i.nome) + '</strong>' +
             (i.descricao ? '<br><span style="color:var(--cor-texto-suave);font-size:.82rem">' +
                            escapar(i.descricao) + '</span>' : '') + '</td>' +
           '<td>' + escapar(i.categoria || '—') + '</td>' +
           '<td style="white-space:nowrap">' +
-            (Number(i.valor) > 0 ? moeda.format(i.valor) : 'Valor livre') + '</td>' +
-          '<td>' + (dado
-              ? '<span class="etiqueta etiqueta--sim">' + escapar(dado.nome) + '</span>'
+            (Number(i.valor) > 0 ? moeda.format(i.valor) : 'Valor livre') +
+            (total > 1 ? '<br><span style="color:var(--cor-texto-suave);font-size:.8rem">' +
+                         moeda.format(Number(i.valor) / total) + ' por cota</span>' : '') + '</td>' +
+          '<td style="white-space:nowrap">' +
+            '<input type="number" class="cota-inline" data-cotas-de="' + escapar(i.id) + '" ' +
+              'min="1" max="50" step="1" value="' + total + '" aria-label="Cotas de ' + escapar(i.nome) + '">' +
+            (total > 1
+              ? '<br><span style="color:var(--cor-texto-suave);font-size:.78rem">' +
+                tomadas + ' de ' + total + ' preenchidas</span>'
+              : '<br><span style="color:var(--cor-texto-suave);font-size:.78rem">inteiro</span>') +
+          '</td>' +
+          '<td>' + (quem.length
+              ? '<span class="etiqueta etiqueta--sim">' + escapar(quem.join(', ')) + '</span>'
               : '<span style="color:var(--cor-texto-suave)">disponível</span>') + '</td>' +
           '<td>' + (i.ativo === false
               ? '<span class="etiqueta etiqueta--nao">Escondido</span>'
@@ -504,6 +598,7 @@
         categoria: i.categoria || '',
         descricao: i.descricao || '',
         imagem: i.imagem || '',
+        cotas: Math.max(1, Number(i.cotas) || 1),
         ordem: n,
         ativo: true
       };
@@ -623,31 +718,69 @@
   /* ============================================================
      AÇÕES DAS TABELAS
      ============================================================ */
+  /* cotas editadas direto na tabela */
+  $('#conteudo-aba').addEventListener('change', function (e) {
+    var campo = e.target.closest('.cota-inline');
+    if (!campo) return;
+    var id = campo.dataset.cotasDe;
+    var n = Math.min(50, Math.max(1, Math.round(Number(campo.value) || 1)));
+    campo.value = n;
+
+    var tomadas = cotasTomadas(id);
+    if (n < tomadas) {
+      aviso('Já foram preenchidas ' + tomadas + ' cotas. Não dá para deixar menos que isso.', true);
+      campo.value = Math.max(1, Number((estado.catalogo[id] || {}).cotas) || 1);
+      return;
+    }
+
+    DADOS.salvarItem(id, { cotas: n })
+      .then(function () {
+        var item = estado.catalogo[id] || {};
+        aviso(n === 1
+          ? 'Presente inteiro, sem divisão.'
+          : n + ' cotas de ' + moeda.format((Number(item.valor) || 0) / n) + ' cada.');
+      })
+      .catch(function (err) { aviso(explicarErro(err), true); });
+  });
+
   $('#conteudo-aba').addEventListener('click', function (e) {
     var b = e.target.closest('button');
     if (!b) return;
     var d = b.dataset;
 
     if (d.pago) {
-      DADOS.atualizarPresente(d.pago, { pago: true })
+      DADOS.atualizarPresente(d.pago, d.contrib, { pago: true })
         .then(function () { aviso('Recebimento confirmado.'); });
 
     } else if (d.liberar) {
-      if (!confirm('Devolver este presente à lista? Ele volta a ficar disponível no site.')) return;
-      DADOS.atualizarPresente(d.liberar, null)
-        .then(function () { aviso('Presente devolvido à lista.'); });
+      perguntar('Devolver esta cota à lista? Ela volta a ficar disponível no site.', 'Devolver')
+        .then(function (sim) {
+          if (!sim) return;
+          DADOS.atualizarPresente(d.liberar, d.contrib, null)
+            .then(function () { aviso('Cota devolvida à lista.'); })
+            .catch(function (e) { aviso(explicarErro(e), true); });
+        });
 
     } else if (d.aprovar) {
       DADOS.atualizarRecado(d.aprovar, { aprovado: d.valor === '1' })
         .then(function () { aviso(d.valor === '1' ? 'Recado publicado no mural.' : 'Recado retirado do mural.'); });
 
     } else if (d.excluirRecado) {
-      if (!confirm('Excluir este recado definitivamente?')) return;
-      DADOS.atualizarRecado(d.excluirRecado, null).then(function () { aviso('Recado excluído.'); });
+      perguntar('Excluir este recado definitivamente?', 'Excluir').then(function (sim) {
+        if (!sim) return;
+        DADOS.atualizarRecado(d.excluirRecado, null)
+          .then(function () { aviso('Recado excluído.'); })
+          .catch(function (e) { aviso(explicarErro(e), true); });
+      });
 
     } else if (d.excluirConf) {
-      if (!confirm('Limpar a resposta desta família? Ela volta para "aguardando" e pode confirmar de novo.')) return;
-      DADOS.excluirConfirmacao(d.excluirConf).then(function () { aviso('Resposta limpa.'); });
+      perguntar('Limpar a resposta desta família? Ela volta para "aguardando" e pode confirmar de novo.', 'Limpar')
+        .then(function (sim) {
+          if (!sim) return;
+          DADOS.excluirConfirmacao(d.excluirConf)
+            .then(function () { aviso('Resposta limpa.'); })
+            .catch(function (e) { aviso(explicarErro(e), true); });
+        });
 
     } else if (d.editar) {
       abrirItem(d.editar);
@@ -661,14 +794,178 @@
         .then(function () { aviso(atual.ativo === false ? 'Item visível no site.' : 'Item escondido do site.'); });
 
     } else if (d.apagar) {
-      var dado = estado.presentes[d.apagar];
-      var texto = dado
-        ? 'ATENÇÃO: ' + dado.nome + ' já escolheu este presente. Excluir mesmo assim?'
-        : 'Excluir este item da lista?';
-      if (!confirm(texto)) return;
-      DADOS.salvarItem(d.apagar, null).then(function () { aviso('Item excluído.'); });
+      var quem = contribuicoesDe(d.apagar).map(function (c) { return c.nome; });
+      var texto = quem.length
+        ? 'ATENÇÃO: ' + quem.join(', ') + ' já escolheu este presente. Excluir mesmo assim?'
+        : 'Excluir este presente da lista? Isso não pode ser desfeito.';
+      perguntar(texto, 'Excluir').then(function (sim) {
+        if (!sim) return;
+        DADOS.salvarItem(d.apagar, null)
+          .then(function () { return DADOS.salvarImagem(d.apagar, null); })
+          .then(function () { aviso('Presente excluído da lista.'); })
+          .catch(function (e) { aviso(explicarErro(e), true); });
+      });
     }
   });
+
+  /* ============================================================
+     EDITOR DE FOTO DO PRESENTE
+     ------------------------------------------------------------
+     Aceita arquivo, arrastar-e-soltar e colar print (Ctrl+V).
+     A imagem é recortada em 4:3, reduzida e comprimida antes de
+     ir para o banco — fica em torno de 30 KB por foto.
+     ============================================================ */
+  var FOTO = (function () {
+    var LARG = 640, ALT = 480, QUALIDADE = 0.72;
+    var canvas = $('#foto-canvas'), ctx = canvas.getContext('2d');
+    var img = null, zoom = 1, offX = 0.5, offY = 0.5;
+    var removida = false, arrastando = false, ultimo = null, mexeu = false;
+
+    function estado(temFoto) {
+      $('#foto-vazio').classList.toggle('oculto', temFoto);
+      $('#foto-ctrl').classList.toggle('oculto', !temFoto);
+      $('#foto-area').classList.toggle('foto-area--com-foto', temFoto);
+      $('#foto-ajuda').textContent = temFoto
+        ? 'Arraste a imagem dentro do quadro para escolher o enquadramento.'
+        : 'Aceita arquivo do computador, arrastar-e-soltar ou colar um print.';
+    }
+
+    function desenhar() {
+      ctx.clearRect(0, 0, LARG, ALT);
+      if (!img) return;
+      var escala = Math.max(LARG / img.width, ALT / img.height) * zoom;
+      var w = img.width * escala, h = img.height * escala;
+      var x = (LARG - w) * offX, y = (ALT - h) * offY;
+      ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, LARG, ALT);
+      ctx.drawImage(img, x, y, w, h);
+    }
+
+    function carregar(src) {
+      var novo = new Image();
+      novo.onload = function () {
+        img = novo; zoom = 1; offX = 0.5; offY = 0.5; removida = false; mexeu = true;
+        $('#foto-zoom').value = 100;
+        estado(true); desenhar();
+      };
+      novo.onerror = function () { aviso('Não consegui ler essa imagem.', true); };
+      novo.src = src;
+    }
+
+    function doArquivo(file) {
+      if (!file || file.type.indexOf('image/') !== 0) return;
+      if (file.size > 12 * 1024 * 1024) return aviso('Imagem muito grande (máximo 12 MB).', true);
+      var leitor = new FileReader();
+      leitor.onload = function (e) { carregar(e.target.result); };
+      leitor.readAsDataURL(file);
+    }
+
+    /* ---------- eventos ---------- */
+    $('#foto-area').addEventListener('click', function (e) {
+      if (!img || e.target.closest('.foto-ctrl')) $('#foto-input').click();
+    });
+    $('#foto-area').addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); $('#foto-input').click(); }
+    });
+    $('#foto-input').addEventListener('change', function () { doArquivo(this.files[0]); this.value = ''; });
+    $('#foto-trocar').addEventListener('click', function (e) { e.stopPropagation(); $('#foto-input').click(); });
+
+    $('#foto-remover').addEventListener('click', function (e) {
+      e.stopPropagation();
+      img = null; removida = true; mexeu = true;
+      ctx.clearRect(0, 0, LARG, ALT);
+      estado(false);
+    });
+
+    $('#foto-zoom').addEventListener('input', function () {
+      zoom = Number(this.value) / 100; mexeu = true; desenhar();
+    });
+
+    ['dragenter', 'dragover'].forEach(function (ev) {
+      $('#foto-area').addEventListener(ev, function (e) {
+        e.preventDefault(); this.classList.add('foto-area--sobre');
+      });
+    });
+    ['dragleave', 'drop'].forEach(function (ev) {
+      $('#foto-area').addEventListener(ev, function (e) {
+        e.preventDefault(); this.classList.remove('foto-area--sobre');
+      });
+    });
+    $('#foto-area').addEventListener('drop', function (e) {
+      if (e.dataTransfer.files && e.dataTransfer.files[0]) doArquivo(e.dataTransfer.files[0]);
+    });
+
+    /* colar print com Ctrl+V, só com a janela do presente aberta */
+    document.addEventListener('paste', function (e) {
+      if ($('#janela-item').hidden) return;
+      var itens = (e.clipboardData || {}).items || [];
+      for (var i = 0; i < itens.length; i++) {
+        if (itens[i].type.indexOf('image/') === 0) {
+          doArquivo(itens[i].getAsFile());
+          aviso('Print colado. Ajuste o enquadramento se quiser.');
+          e.preventDefault();
+          return;
+        }
+      }
+    });
+
+    /* arrastar para reposicionar */
+    function pos(e) {
+      var t = e.touches ? e.touches[0] : e;
+      return { x: t.clientX, y: t.clientY };
+    }
+    function comecar(e) {
+      if (!img) return;
+      arrastando = true; ultimo = pos(e);
+      if (e.cancelable) e.preventDefault();
+    }
+    function mover(e) {
+      if (!arrastando || !img) return;
+      var p = pos(e), r = canvas.getBoundingClientRect();
+      var escala = Math.max(LARG / img.width, ALT / img.height) * zoom;
+      var folgaX = img.width * escala - LARG;
+      var folgaY = img.height * escala - ALT;
+      if (folgaX > 0) offX = Math.min(1, Math.max(0, offX + (p.x - ultimo.x) * (LARG / r.width) / folgaX));
+      if (folgaY > 0) offY = Math.min(1, Math.max(0, offY + (p.y - ultimo.y) * (ALT / r.height) / folgaY));
+      ultimo = p; mexeu = true;
+      desenhar();
+      if (e.cancelable) e.preventDefault();
+    }
+    function parar() { arrastando = false; }
+
+    canvas.addEventListener('mousedown', comecar);
+    window.addEventListener('mousemove', mover);
+    window.addEventListener('mouseup', parar);
+    canvas.addEventListener('touchstart', comecar, { passive: false });
+    canvas.addEventListener('touchmove', mover, { passive: false });
+    canvas.addEventListener('touchend', parar);
+
+    return {
+      /* prepara o editor ao abrir a janela */
+      abrir: function (dataUrl) {
+        img = null; removida = false; mexeu = false; zoom = 1; offX = 0.5; offY = 0.5;
+        $('#foto-zoom').value = 100;
+        ctx.clearRect(0, 0, LARG, ALT);
+        if (dataUrl) {
+          var atual = new Image();
+          atual.onload = function () {
+            img = atual; estado(true); desenhar();
+            /* a foto salva já vem recortada: zoom e posição partem do padrão */
+          };
+          atual.src = dataUrl;
+          estado(true);
+        } else {
+          estado(false);
+        }
+      },
+      /* devolve: string (foto nova), null (remover) ou undefined (não mexeu) */
+      resultado: function () {
+        if (removida) return null;
+        if (!img || !mexeu) return undefined;   /* não mexeu: mantém a foto que já estava */
+        desenhar();
+        return canvas.toDataURL('image/jpeg', QUALIDADE);
+      }
+    };
+  })();
 
   /* ============================================================
      JANELA DE EDIÇÃO DE PRESENTE
@@ -697,6 +994,9 @@
     $('#item-categoria').value = i.categoria || '';
     $('#item-descricao').value = i.descricao || '';
     $('#item-imagem').value    = i.imagem || '';
+    $('#item-cotas').value     = Math.max(1, Number(i.cotas) || 1);
+    atualizarInfoCotas();
+    FOTO.abrir(id ? (estado.imagens[id] || '') : '');
 
     /* sugestões de categoria já usadas */
     var cats = itensCatalogo().map(function (x) { return x.categoria; })
@@ -710,6 +1010,18 @@
     document.body.style.overflow = 'hidden';
     $('#item-nome').focus();
   }
+
+  function atualizarInfoCotas() {
+    var n = Math.max(1, Number($('#item-cotas').value) || 1);
+    var v = Number($('#item-valor').value) || 0;
+    $('#cotas-info').textContent = n === 1
+      ? 'presente inteiro, sem divisão'
+      : v > 0
+        ? n + ' cotas de ' + moeda.format(v / n) + ' cada'
+        : n + ' cotas';
+  }
+  $('#item-cotas').addEventListener('input', atualizarInfoCotas);
+  $('#item-valor').addEventListener('input', atualizarInfoCotas);
 
   $('#novo-item').addEventListener('click', function () {
     if (!catalogoPublicado()) return aviso('Publique a lista de exemplo primeiro.', true);
@@ -727,6 +1039,7 @@
       categoria: $('#item-categoria').value.trim(),
       descricao: $('#item-descricao').value.trim(),
       imagem: $('#item-imagem').value.trim(),
+      cotas: Math.min(50, Math.max(1, Number($('#item-cotas').value) || 1)),
       ativo: true
     };
 
@@ -736,10 +1049,25 @@
       campos.ordem = Date.now();
     }
 
-    DADOS.salvarItem(id, campos).then(function () {
-      aviso(itemEditando ? 'Presente atualizado.' : 'Presente adicionado à lista.');
-      fecharItem();
-    }).catch(function () { aviso('Não conseguimos salvar.', true); });
+    var foto = FOTO.resultado();
+
+    var b = this.querySelector('button[type=submit]');
+    b.disabled = true; b.textContent = 'Salvando...';
+
+    DADOS.salvarItem(id, campos)
+      .then(function () {
+        if (foto === undefined) return true;          /* não mexeu na foto */
+        return DADOS.salvarImagem(id, foto);          /* string ou null */
+      })
+      .then(function () {
+        aviso(itemEditando ? 'Presente atualizado.' : 'Presente adicionado à lista.');
+        fecharItem();
+      })
+      .catch(function (e) {
+        console.error(e);
+        aviso(explicarErro(e), true);
+      })
+      .finally(function () { b.disabled = false; b.textContent = 'Salvar presente'; });
   });
 
   /* ============================================================
@@ -833,7 +1161,7 @@
     DADOS.salvarFamilia(id, dados).then(function () {
       aviso(familiaEditando ? 'Família atualizada.' : 'Família adicionada à lista.');
       fecharFamilia();
-    }).catch(function () { aviso('Não conseguimos salvar.', true); });
+    }).catch(function (e) { aviso(explicarErro(e), true); });
   });
 
   $('#excluir-familia').addEventListener('click', function () {
@@ -842,10 +1170,11 @@
     var texto = temResposta
       ? 'ATENÇÃO: esta família já confirmou presença. Excluir apaga a família da lista (a resposta continua no banco). Continuar?'
       : 'Excluir esta família da lista de convidados?';
-    if (!confirm(texto)) return;
-    DADOS.salvarFamilia(familiaEditando, null).then(function () {
-      aviso('Família excluída.');
-      fecharFamilia();
+    perguntar(texto, 'Excluir').then(function (sim) {
+      if (!sim) return;
+      DADOS.salvarFamilia(familiaEditando, null)
+        .then(function () { aviso('Família excluída.'); fecharFamilia(); })
+        .catch(function (e) { aviso(explicarErro(e), true); });
     });
   });
 
@@ -874,10 +1203,9 @@
 
     } else if (abaAtiva === 'presentes') {
       nome = 'presentes';
-      linhas = [['Presente', 'Valor', 'Quem deu', 'Mensagem', 'Escolhido em', 'Recebido']];
-      Object.keys(estado.presentes).forEach(function (k) {
-        var p = estado.presentes[k];
-        linhas.push([p.presente, Number(p.valor) || 0, p.nome, p.mensagem,
+      linhas = [['Presente', 'Cotas', 'Valor', 'Quem deu', 'Mensagem', 'Escolhido em', 'Recebido']];
+      todasContribuicoes().forEach(function (p) {
+        linhas.push([p.presente, Number(p.cotas) || 1, Number(p.valor) || 0, p.nome, p.mensagem,
                      dataHora(p.reservadoEm), p.pago ? 'Sim' : 'Nao']);
       });
 

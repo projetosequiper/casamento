@@ -194,38 +194,62 @@ window.DADOS = (function () {
       });
     },
 
-    /* Reserva um presente. Usa transação para impedir que duas pessoas
-       escolham o mesmo item ao mesmo tempo. */
-    reservarPresente: function (idPresente, dados) {
+    /* Registra uma contribuição num presente.
+       Cada presente pode ter várias, se estiver dividido em cotas.
+       Guardado em presentes/{item}/{contribuicao}.                 */
+    reservarPresente: function (idItem, dados) {
       dados.reservadoEm = Date.now();
-      dados.status = 'reservado';
       return iniciar().then(function (ok) {
         if (!ok) {
           var todos = LOCAL.ler('presentes', {});
-          if (todos[idPresente]) return false;
-          todos[idPresente] = dados;
+          todos[idItem] = todos[idItem] || {};
+          todos[idItem][id()] = dados;
           LOCAL.gravar('presentes', todos);
           return true;
         }
-        return ref('presentes/' + idPresente).transaction(function (atual) {
-          if (atual) return;            // já reservado: cancela a transação
-          return dados;
-        }).then(function (res) { return res.committed; });
+        return ref('presentes/' + idItem).push(dados).then(function () { return true; });
       });
     },
 
-    atualizarPresente: function (idPresente, campos) {
+    atualizarPresente: function (idItem, idContrib, campos) {
       return iniciar().then(function (ok) {
         if (!ok) {
           var todos = LOCAL.ler('presentes', {});
-          if (campos === null) delete todos[idPresente];
-          else todos[idPresente] = Object.assign(todos[idPresente] || {}, campos);
+          var item = todos[idItem] || {};
+          if (campos === null) delete item[idContrib];
+          else item[idContrib] = Object.assign(item[idContrib] || {}, campos);
+          if (Object.keys(item).length) todos[idItem] = item;
+          else delete todos[idItem];
           LOCAL.gravar('presentes', todos);
           return true;
         }
-        return campos === null
-          ? ref('presentes/' + idPresente).remove()
-          : ref('presentes/' + idPresente).update(campos);
+        var caminho = 'presentes/' + idItem + '/' + idContrib;
+        return campos === null ? ref(caminho).remove() : ref(caminho).update(campos);
+      });
+    },
+
+    /* ---------- FOTOS DOS PRESENTES ----------
+       Guardadas separadas do catálogo para a lista carregar rápido:
+       nomes e valores chegam primeiro, as fotos entram depois.     */
+    ouvirImagens: function (cb) {
+      iniciar().then(function (ok) {
+        if (!ok) return ouvirLocal('imagens', cb);
+        ref('imagens').on('value', function (snap) { cb(snap.val() || {}); });
+      });
+    },
+
+    salvarImagem: function (idItem, dataUrl) {
+      return iniciar().then(function (ok) {
+        if (!ok) {
+          var todas = LOCAL.ler('imagens', {});
+          if (dataUrl === null) delete todas[idItem];
+          else todas[idItem] = dataUrl;
+          LOCAL.gravar('imagens', todas);
+          return true;
+        }
+        return dataUrl === null
+          ? ref('imagens/' + idItem).remove()
+          : ref('imagens/' + idItem).set(dataUrl);
       });
     },
 

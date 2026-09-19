@@ -6,8 +6,8 @@
   <title>Área dos noivos</title>
   <meta name="robots" content="noindex, nofollow">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍃</text></svg>">
-  <link rel="stylesheet" href="assets/css/tema.css?v=2">
-  <link rel="stylesheet" href="assets/css/estilo.css?v=2">
+  <link rel="stylesheet" href="assets/css/tema.css?v=4">
+  <link rel="stylesheet" href="assets/css/estilo.css?v=4">
   <style>
     body { background: var(--cor-fundo-alt); }
 
@@ -139,6 +139,52 @@
     }
     .tirar-pessoa:hover { color: var(--cor-erro); background: var(--cor-fundo-alt); }
 
+    .linha-cotas { display: flex; align-items: center; gap: .8rem; }
+    .linha-cotas input {
+      width: 90px; background: var(--cor-fundo); border: 1px solid var(--cor-borda);
+      border-radius: var(--raio); padding: .7rem .9rem; font: inherit; color: var(--cor-texto);
+      text-align: center;
+    }
+    .linha-cotas__info { font-size: .85rem; color: var(--cor-texto-suave); }
+
+    .foto-area {
+      position: relative; width: 100%; aspect-ratio: 4/3;
+      border: 1px dashed var(--cor-borda); border-radius: var(--raio);
+      background: var(--cor-fundo); overflow: hidden; cursor: pointer;
+      transition: border-color var(--transicao), background var(--transicao);
+    }
+    .foto-area:hover, .foto-area--sobre { border-color: var(--cor-destaque); background: var(--cor-destaque-suave); }
+    .foto-area canvas { width: 100%; height: 100%; display: block; }
+    .foto-area--com-foto { cursor: grab; border-style: solid; }
+    .foto-area--com-foto:active { cursor: grabbing; }
+    .foto-vazio {
+      position: absolute; inset: 0;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: .4rem; text-align: center; padding: 1rem; pointer-events: none;
+      color: var(--cor-texto-suave);
+    }
+    .foto-vazio svg { width: 32px; height: 32px; color: var(--cor-destaque); margin-bottom: .3rem; }
+    .foto-vazio strong { font-weight: 500; font-size: .92rem; color: var(--cor-texto); }
+    .foto-vazio span { font-size: .8rem; }
+
+    .foto-ctrl { display: flex; align-items: center; gap: .7rem; flex-wrap: wrap; margin-top: .7rem; }
+    .foto-zoom { display: flex; align-items: center; gap: .5rem; flex: 1 1 160px; }
+    .foto-zoom span { font-size: var(--t-micro); letter-spacing: .1em; text-transform: uppercase; color: var(--cor-texto-suave); }
+    .foto-zoom input { flex: 1; accent-color: var(--cor-destaque); }
+
+    .cota-inline {
+      width: 68px; text-align: center;
+      background: var(--cor-fundo); border: 1px solid var(--cor-borda);
+      border-radius: var(--raio); padding: .35rem .4rem;
+      font: inherit; font-size: .88rem; color: var(--cor-texto);
+      transition: border-color var(--transicao);
+    }
+    .cota-inline:hover { border-color: var(--cor-destaque); }
+    .cota-inline:focus {
+      outline: none; border-color: var(--cor-destaque);
+      box-shadow: 0 0 0 3px var(--cor-destaque-suave);
+    }
+
     .pilula {
       display: inline-block; font-size: .72rem; letter-spacing: .04em;
       background: var(--cor-destaque-suave); color: var(--cor-destaque-escuro);
@@ -231,11 +277,50 @@
         <label class="campo__rotulo" for="item-descricao">Descrição</label>
         <input type="text" id="item-descricao" placeholder="Opcional">
       </div>
+
       <div class="campo">
-        <label class="campo__rotulo" for="item-imagem">Link da foto</label>
-        <input type="text" id="item-imagem" placeholder="https://... (opcional)">
-        <p class="campo__ajuda">Pode ser o link da foto no site da loja.</p>
+        <label class="campo__rotulo" for="item-cotas">Dividir em cotas</label>
+        <div class="linha-cotas">
+          <input type="number" id="item-cotas" min="1" max="50" step="1" value="1" inputmode="numeric">
+          <span class="linha-cotas__info" id="cotas-info">presente inteiro, sem divisão</span>
+        </div>
+        <p class="campo__ajuda">Com 1, o presente é comprado por uma pessoa só.
+          Com mais de 1, vários convidados dividem o valor — bom para itens caros.</p>
       </div>
+
+      <div class="campo">
+        <label class="campo__rotulo">Foto do presente</label>
+        <div class="foto-area" id="foto-area" tabindex="0" role="button"
+             aria-label="Escolher foto do presente">
+          <canvas id="foto-canvas" width="640" height="480"></canvas>
+          <div class="foto-vazio" id="foto-vazio">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
+              <rect x="3" y="5" width="18" height="14" rx="2"/>
+              <circle cx="8.5" cy="10" r="1.6"/><path d="M21 16l-5-5L5 19"/>
+            </svg>
+            <strong>Clique para escolher uma foto</strong>
+            <span>ou arraste o arquivo aqui, ou cole um print com Ctrl+V</span>
+          </div>
+        </div>
+        <input type="file" id="foto-input" accept="image/*" hidden>
+
+        <div class="foto-ctrl oculto" id="foto-ctrl">
+          <label class="foto-zoom">
+            <span>Zoom</span>
+            <input type="range" id="foto-zoom" min="100" max="280" value="100">
+          </label>
+          <button type="button" class="mini" id="foto-trocar">Trocar</button>
+          <button type="button" class="mini mini--perigo" id="foto-remover">Remover</button>
+        </div>
+        <p class="campo__ajuda" id="foto-ajuda">Arraste a imagem dentro do quadro para escolher o enquadramento.</p>
+      </div>
+
+      <details class="campo">
+        <summary class="campo__rotulo" style="cursor:pointer">Ou usar o link de uma foto da internet</summary>
+        <input type="text" id="item-imagem" placeholder="https://..." style="margin-top:.6rem">
+        <p class="campo__ajuda">Só é usado se você não enviar uma foto acima.</p>
+      </details>
+
       <button type="submit" class="botao botao--largo">Salvar presente</button>
     </form>
   </div>
@@ -267,12 +352,24 @@
   </div>
 </div>
 
+<!-- ============ CONFIRMAÇÃO ============ -->
+<div class="janela" id="janela-confirma" role="alertdialog" aria-modal="true" aria-labelledby="confirma-titulo" hidden>
+  <div class="janela__caixa" style="max-width:420px">
+    <h2 class="janela__titulo" id="confirma-titulo">Tem certeza?</h2>
+    <p id="confirma-texto" style="color:var(--cor-texto-suave);line-height:1.7;margin:0 0 1.6rem"></p>
+    <div style="display:flex;gap:.6rem">
+      <button class="botao botao--vazado" id="confirma-nao" style="flex:1">Cancelar</button>
+      <button class="botao" id="confirma-sim" style="flex:1">Confirmar</button>
+    </div>
+  </div>
+</div>
+
 <div class="aviso-flutuante" id="aviso" role="status" aria-live="polite"></div>
 
-<script src="assets/js/conteudo.js?v=2"></script>
-<script src="assets/js/convidados.js?v=2"></script>
-<script src="assets/js/firebase-config.js?v=2"></script>
-<script src="assets/js/dados.js?v=2"></script>
-<script src="assets/js/admin.js?v=2"></script>
+<script src="assets/js/conteudo.js?v=4"></script>
+<script src="assets/js/convidados.js?v=4"></script>
+<script src="assets/js/firebase-config.js?v=4"></script>
+<script src="assets/js/dados.js?v=4"></script>
+<script src="assets/js/admin.js?v=4"></script>
 </body>
 </html>

@@ -699,6 +699,72 @@ section[id] { scroll-margin-top: 80px; }
   margin: auto 0 1rem; font-variant-numeric: tabular-nums;
 }
 
+/* ---------- CONVITE PARA A LISTA DE PRESENTES ---------- */
+.convite-presentes {
+  margin-top: 2rem; padding-top: 1.8rem;
+  border-top: 1px solid var(--cor-borda);
+}
+.convite-presentes .sprig { width: 30px; margin: 0 auto 1rem; }
+.convite-presentes__texto {
+  color: var(--cor-texto-suave); font-size: .95rem;
+  margin: 0 0 1.4rem; line-height: 1.7;
+}
+
+/* ---------- COTAS ---------- */
+.cotas { margin: .2rem 0 .7rem; }
+.cotas__barra {
+  height: 4px; background: var(--cor-borda);
+  border-radius: 100px; overflow: hidden;
+}
+.cotas__barra i {
+  display: block; height: 100%;
+  background: var(--cor-destaque); border-radius: 100px;
+  transition: width var(--transicao);
+}
+.cotas__texto {
+  font-size: var(--t-micro); letter-spacing: .06em;
+  color: var(--cor-texto-suave); margin: .45rem 0 0;
+}
+.presente__unidade {
+  display: inline-block; margin-left: .4rem;
+  font-family: var(--fonte-texto); font-size: .68rem;
+  letter-spacing: .1em; text-transform: uppercase;
+  color: var(--cor-texto-suave);
+}
+
+.janela__aviso {
+  background: var(--cor-destaque-suave);
+  border-left: 2px solid var(--cor-destaque);
+  padding: .9rem 1.1rem; font-size: .88rem;
+  border-radius: 0 var(--raio) var(--raio) 0;
+  margin: 0 0 1.4rem; line-height: 1.6;
+}
+
+.seletor-cotas {
+  display: flex; align-items: center; justify-content: center;
+  gap: 1.4rem; margin: 1.4rem 0 .4rem;
+}
+.seletor-cotas__btn {
+  width: 44px; height: 44px; flex: 0 0 auto;
+  border: 1px solid var(--cor-borda); background: var(--cor-fundo);
+  border-radius: 50%; font-size: 1.3rem; line-height: 1; cursor: pointer;
+  color: var(--cor-texto); transition: all var(--transicao);
+}
+.seletor-cotas__btn:hover:not(:disabled) {
+  border-color: var(--cor-destaque); background: var(--cor-destaque-suave);
+  color: var(--cor-destaque-escuro);
+}
+.seletor-cotas__btn:disabled { opacity: .35; cursor: not-allowed; }
+.seletor-cotas__valor { min-width: 90px; text-align: center; }
+.seletor-cotas__valor strong {
+  display: block; font-family: var(--fonte-titulo);
+  font-size: 2.4rem; line-height: 1; font-weight: 400;
+}
+.seletor-cotas__valor span {
+  font-size: var(--t-micro); letter-spacing: .14em;
+  text-transform: uppercase; color: var(--cor-texto-suave);
+}
+
 /* ---------- JANELA (MODAL) ---------- */
 .janela {
   position: fixed; inset: 0; z-index: 200;

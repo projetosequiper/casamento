@@ -58,24 +58,35 @@
           "descricao": { ".validate": "newData.isString() && newData.val().length <= 300" },
           "imagem":    { ".validate": "newData.isString() && newData.val().length <= 600" },
           "ordem":     { ".validate": "newData.isNumber()" },
+          "cotas":     { ".validate": "newData.isNumber() && newData.val() >= 1 && newData.val() <= 50" },
           "ativo":     { ".validate": "newData.isBoolean()" },
           "$outro": { ".validate": false }
         }
       },
 
+      "imagens": {
+        ".read": true,
+        "$item": {
+          ".write": "auth != null",
+          ".validate": "newData.isString() && newData.val().length <= 400000"
+        }
+      },
+
       "presentes": {
         ".read": true,
-        "$presente": {
-          ".write": "(!data.exists() && newData.exists() && newData.child('pago').val() === false) || auth != null",
-          ".validate": "newData.hasChildren(['presente', 'nome', 'valor'])",
-          "presente":    { ".validate": "newData.isString() && newData.val().length <= 120" },
-          "nome":        { ".validate": "newData.isString() && newData.val().length >= 2 && newData.val().length <= 120" },
-          "valor":       { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 100000" },
-          "mensagem":    { ".validate": "newData.isString() && newData.val().length <= 300" },
-          "status":      { ".validate": "newData.isString()" },
-          "pago":        { ".validate": "newData.isBoolean()" },
-          "reservadoEm": { ".validate": "newData.isNumber()" },
-          "$outro": { ".validate": false }
+        "$item": {
+          "$contribuicao": {
+            ".write": "(!data.exists() && newData.exists() && newData.child('pago').val() === false) || auth != null",
+            ".validate": "newData.hasChildren(['presente', 'nome', 'valor'])",
+            "presente":    { ".validate": "newData.isString() && newData.val().length <= 120" },
+            "nome":        { ".validate": "newData.isString() && newData.val().length >= 2 && newData.val().length <= 120" },
+            "valor":       { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 100000" },
+            "cotas":       { ".validate": "newData.isNumber() && newData.val() >= 1 && newData.val() <= 50" },
+            "mensagem":    { ".validate": "newData.isString() && newData.val().length <= 300" },
+            "pago":        { ".validate": "newData.isBoolean()" },
+            "reservadoEm": { ".validate": "newData.isNumber()" },
+            "$outro": { ".validate": false }
+          }
         }
       },
 

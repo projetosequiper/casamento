@@ -497,10 +497,12 @@
               ? vao[0].nome + ' está confirmado(a)'
               : vao.length + ' pessoas confirmadas: ' + vao.map(function (p) { return p.nome; }).join(', ')) +
             '. Já estamos ansiosos para ver vocês lá. Se algo mudar, é só voltar aqui e confirmar de novo.';
+          $('#sucesso-convite').classList.remove('oculto');
         } else {
           $('#sucesso-titulo').textContent = 'Obrigado por avisar';
           $('#sucesso-texto').textContent =
             'Vamos sentir sua falta, mas agradecemos por nos avisar com carinho.';
+          $('#sucesso-convite').classList.add('oculto');
         }
         $('#rsvp-sucesso').scrollIntoView({ behavior: 'smooth', block: 'center' });
       }).catch(function (err) {
@@ -522,21 +524,40 @@
   })();
 
   /* ============================================================
-     5. LISTA DE PRESENTES
+     5. LISTA DE PRESENTES (com cotas)
      ============================================================ */
   (function () {
     var padrao = (C.presentes.itens || []).map(function (i, n) {
-      return Object.assign({ ordem: n }, i);
+      return Object.assign({ ordem: n, cotas: 1 }, i);
     });
     var itens = padrao;
-    var reservados = {};
+    var dadosPresentes = {};   /* presentes/{item}/{contribuicao} */
+    var imagens = {};
     var filtro = 'todos';
 
-    /* o catálogo publicado no painel manda; sem ele, usa a lista de exemplo */
+    /* aceita o formato antigo (uma contribuição solta por item) */
+    function contribuicoesDe(idItem) {
+      var no = dadosPresentes[idItem];
+      if (!no) return [];
+      if (no.nome && no.valor !== undefined && !no.presente === false) { /* formato antigo */ }
+      if (typeof no.nome === 'string') return [Object.assign({ _id: 'antigo', cotas: 1 }, no)];
+      return Object.keys(no).map(function (k) {
+        return Object.assign({ _id: k, cotas: 1 }, no[k]);
+      });
+    }
+
+    function cotasTomadas(idItem) {
+      return contribuicoesDe(idItem).reduce(function (s, c) { return s + (Number(c.cotas) || 1); }, 0);
+    }
+
+    function totalCotas(item) { return Math.max(1, Number(item.cotas) || 1); }
+    function valorCota(item)  { return Number(item.valor) / totalCotas(item); }
+    function cotasLivres(item) { return Math.max(0, totalCotas(item) - cotasTomadas(item.id)); }
+
     DADOS.ouvirCatalogo(function (cat) {
       var chaves = Object.keys(cat || {});
       itens = chaves.length
-        ? chaves.map(function (k) { return Object.assign({ id: k }, cat[k]); })
+        ? chaves.map(function (k) { return Object.assign({ cotas: 1 }, cat[k], { id: k }); })
                 .filter(function (i) { return i.ativo !== false; })
                 .sort(function (a, b) { return (a.ordem || 0) - (b.ordem || 0); })
         : padrao;
@@ -544,7 +565,10 @@
       pintar();
     });
 
-    /* filtros por categoria */
+    DADOS.ouvirPresentes(function (dados) { dadosPresentes = dados || {}; pintar(); });
+    DADOS.ouvirImagens(function (dados) { imagens = dados || {}; pintar(); });
+
+    /* ---------- filtros ---------- */
     function montarFiltros() {
       var cats = ['todos'].concat(itens.map(function (i) { return i.categoria; })
                  .filter(function (v, i, a) { return v && a.indexOf(v) === i; }));
@@ -564,29 +588,56 @@
       pintar();
     });
 
+    /* ---------- cartões ---------- */
     function pintar() {
       var lista = itens.filter(function (i) { return filtro === 'todos' || i.categoria === filtro; });
+
       $('#lista-presentes').innerHTML = lista.map(function (i) {
-        var livre = Number(i.valor) <= 0;                 // contribuição de valor livre
-        var dado  = !livre && !!reservados[i.id];
-        return '<article class="presente' + (dado ? ' presente--dado' : '') + '">' +
+        var livre    = Number(i.valor) <= 0;          /* contribuição de valor livre */
+        var total    = totalCotas(i);
+        var dividido = !livre && total > 1;
+        var tomadas  = cotasTomadas(i.id);
+        var restam   = Math.max(0, total - tomadas);
+        var esgotado = !livre && restam <= 0;
+        var foto     = imagens[i.id] || i.imagem || '';
+        var pct      = total ? Math.min(100, Math.round(tomadas / total * 100)) : 0;
+
+        return '<article class="presente' + (esgotado ? ' presente--dado' : '') + '">' +
           '<div class="presente__foto">' +
-            (i.imagem ? '<img src="' + escapar(i.imagem) + '" alt="' + escapar(i.nome) + '" loading="lazy">'
-                      : '<svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">' + ICONES.presente + '</svg>') +
-            (dado ? '<span class="presente__selo">Já presenteado</span>' : '') +
+            (foto ? '<img src="' + escapar(foto) + '" alt="' + escapar(i.nome) + '" loading="lazy">'
+                  : '<svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">' + ICONES.presente + '</svg>') +
+            (esgotado ? '<span class="presente__selo">Já presenteado</span>' : '') +
           '</div>' +
           '<div class="presente__corpo">' +
             '<span class="presente__cat">' + escapar(i.categoria || '') + '</span>' +
             '<h3 class="presente__nome">' + escapar(i.nome) + '</h3>' +
             (i.descricao ? '<p class="presente__desc">' + escapar(i.descricao) + '</p>' : '') +
-            '<p class="presente__valor">' + (livre ? 'Valor livre' : moeda.format(i.valor)) + '</p>' +
-            (dado ? '<button class="botao botao--vazado botao--pequeno" disabled>Presenteado</button>'
-                  : '<button class="botao botao--pequeno" data-presente="' + escapar(i.id) + '">Presentear</button>') +
+
+            (dividido
+              ? '<div class="cotas">' +
+                  '<div class="cotas__barra"><i style="width:' + pct + '%"></i></div>' +
+                  '<p class="cotas__texto">' +
+                    (esgotado ? 'Todas as cotas preenchidas'
+                              : restam + (restam === 1 ? ' cota disponível' : ' cotas disponíveis') +
+                                ' de ' + total) +
+                  '</p>' +
+                '</div>'
+              : '') +
+
+            '<p class="presente__valor">' +
+              (livre ? 'Valor livre'
+                     : dividido
+                       ? moeda.format(valorCota(i)) + '<span class="presente__unidade">por cota</span>'
+                       : moeda.format(i.valor)) +
+            '</p>' +
+
+            (esgotado
+              ? '<button class="botao botao--vazado botao--pequeno" disabled>Presenteado</button>'
+              : '<button class="botao botao--pequeno" data-presente="' + escapar(i.id) + '">' +
+                (dividido ? 'Escolher cotas' : 'Presentear') + '</button>') +
           '</div></article>';
       }).join('');
     }
-
-    DADOS.ouvirPresentes(function (dados) { reservados = dados || {}; pintar(); });
     pintar();
 
     $('#lista-presentes').addEventListener('click', function (e) {
@@ -615,16 +666,44 @@
       if (!item) return;
       ultimoFoco = document.activeElement;
 
-      var livre = Number(item.valor) <= 0;
-      $('#janela-conteudo').innerHTML =
-        '<h2 class="janela__titulo" id="janela-titulo">' + escapar(item.nome) + '</h2>' +
-        '<p class="janela__valor" id="valor-exibido">' + (livre ? 'Você escolhe o valor' : moedaCheia.format(item.valor)) + '</p>' +
-        (livre
-          ? '<div class="campo"><label class="campo__rotulo" for="valor-livre">Quanto você quer contribuir?</label>' +
-            '<input type="number" id="valor-livre" min="1" step="1" placeholder="Ex.: 200" inputmode="numeric"></div>' +
-            '<button class="botao botao--largo" id="gerar-qr">Gerar PIX</button><div id="area-pix"></div>'
-          : '<div id="area-pix"></div>');
+      var livre    = Number(item.valor) <= 0;
+      var total    = totalCotas(item);
+      var dividido = !livre && total > 1;
+      var restam   = cotasLivres(item);
+      var unidade  = valorCota(item);
 
+      var html =
+        '<h2 class="janela__titulo" id="janela-titulo">' + escapar(item.nome) + '</h2>';
+
+      if (livre) {
+        html += '<p class="janela__valor" id="valor-exibido">Você escolhe o valor</p>' +
+          '<div class="campo"><label class="campo__rotulo" for="valor-livre">Quanto você quer contribuir?</label>' +
+          '<input type="number" id="valor-livre" min="1" step="1" placeholder="Ex.: 200" inputmode="numeric"></div>' +
+          '<button class="botao botao--largo" id="gerar-qr">Gerar PIX</button><div id="area-pix"></div>';
+
+      } else if (dividido) {
+        html +=
+          '<p class="janela__aviso">Este presente está dividido em ' + total + ' cotas de ' +
+            moedaCheia.format(unidade) + '. Você escolhe quantas quer dar — e outras pessoas completam o resto.</p>' +
+          '<div class="seletor-cotas">' +
+            '<button type="button" class="seletor-cotas__btn" id="menos" aria-label="Menos cotas">&minus;</button>' +
+            '<div class="seletor-cotas__valor">' +
+              '<strong id="qtd-cotas">1</strong>' +
+              '<span id="rotulo-cotas">cota</span>' +
+            '</div>' +
+            '<button type="button" class="seletor-cotas__btn" id="mais-cotas" aria-label="Mais cotas">+</button>' +
+          '</div>' +
+          '<p class="campo__ajuda" style="text-align:center">Restam ' + restam +
+            (restam === 1 ? ' cota' : ' cotas') + '</p>' +
+          '<p class="janela__valor" id="valor-exibido">' + moedaCheia.format(unidade) + '</p>' +
+          '<button class="botao botao--largo" id="gerar-qr">Gerar PIX</button><div id="area-pix"></div>';
+
+      } else {
+        html += '<p class="janela__valor" id="valor-exibido">' + moedaCheia.format(item.valor) + '</p>' +
+                '<div id="area-pix"></div>';
+      }
+
+      $('#janela-conteudo').innerHTML = html;
       janela.hidden = false;
       requestAnimationFrame(function () { janela.classList.add('janela--aberta'); });
       document.body.style.overflow = 'hidden';
@@ -634,15 +713,32 @@
           var v = Number($('#valor-livre').value);
           if (!(v > 0)) return aviso('Digite um valor maior que zero.', true);
           $('#valor-exibido').textContent = moedaCheia.format(v);
-          montarPix(item, v);
+          montarPix(item, v, 1);
         });
+
+      } else if (dividido) {
+        var qtd = 1;
+        function atualizar() {
+          $('#qtd-cotas').textContent = qtd;
+          $('#rotulo-cotas').textContent = qtd === 1 ? 'cota' : 'cotas';
+          $('#valor-exibido').textContent = moedaCheia.format(unidade * qtd);
+          $('#menos').disabled = qtd <= 1;
+          $('#mais-cotas').disabled = qtd >= restam;
+          $('#area-pix').innerHTML = '';
+        }
+        $('#menos').addEventListener('click', function () { if (qtd > 1) { qtd--; atualizar(); } });
+        $('#mais-cotas').addEventListener('click', function () { if (qtd < restam) { qtd++; atualizar(); } });
+        atualizar();
+        $('#gerar-qr').addEventListener('click', function () { montarPix(item, unidade * qtd, qtd); });
+
       } else {
-        montarPix(item, Number(item.valor));
+        montarPix(item, Number(item.valor), 1);
       }
+
       $('.janela__fechar').focus();
     }
 
-    function montarPix(item, valor) {
+    function montarPix(item, valor, cotas) {
       var p = C.presentes.pix || {};
       var codigo = PIX.gerar({
         chave: p.chave,
@@ -666,7 +762,7 @@
           '<ol class="pix__passos">' +
             '<li>Abra o app do seu banco e escolha <strong>PIX &rsaquo; Copia e cola</strong> (ou leia o QR Code).</li>' +
             '<li>Confira o valor e finalize o pagamento.</li>' +
-            '<li>Volte aqui e avise a gente no botão abaixo, para o presente sair da lista.</li>' +
+            '<li>Volte aqui e avise a gente no botão abaixo.</li>' +
           '</ol>' +
           '<hr style="border:0;border-top:1px solid var(--cor-borda);margin:1.5rem 0">' +
           '<div class="campo"><label class="campo__rotulo" for="pix-nome">Seu nome <span class="obrigatorio">*</span></label>' +
@@ -676,7 +772,6 @@
           '<button class="botao botao--largo" id="confirmar-pix">Já fiz o PIX</button>' +
         '</div>';
 
-      /* QR Code — com CDN reserva caso o primeiro não carregue */
       garantirQR().then(function () {
         var alvo = $('#qr');
         if (!alvo) return;
@@ -696,12 +791,9 @@
       $('#copiar').addEventListener('click', function () {
         var txt = $('#codigo-pix');
         txt.select(); txt.setSelectionRange(0, 99999);
-        var feito = false;
         if (navigator.clipboard && navigator.clipboard.writeText) {
           navigator.clipboard.writeText(codigo).then(function () { aviso('Código PIX copiado!'); });
-          feito = true;
-        }
-        if (!feito) {
+        } else {
           try { document.execCommand('copy'); aviso('Código PIX copiado!'); }
           catch (e) { aviso('Selecione o código e copie manualmente.', true); }
         }
@@ -710,23 +802,28 @@
       $('#confirmar-pix').addEventListener('click', function () {
         var nome = $('#pix-nome').value.trim();
         if (nome.length < 3) return aviso('Escreva seu nome para registrarmos o presente.', true);
+
+        /* confere de novo, caso alguém tenha pego as cotas nesse meio tempo */
+        if (cotas > 1 || totalCotas(item) > 1) {
+          if (cotas > cotasLivres(item)) {
+            aviso('Alguém acabou de pegar essas cotas. Confira o que sobrou.', true);
+            return fechar();
+          }
+        }
+
         var b = this;
         b.disabled = true; b.textContent = 'Registrando...';
 
         DADOS.reservarPresente(item.id, {
           presente: item.nome,
           valor: valor,
+          cotas: cotas,
           nome: nome,
           mensagem: $('#pix-msg').value.trim(),
           pago: false
-        }).then(function (ok) {
-          if (ok) {
-            aviso('Obrigado, ' + nome.split(' ')[0] + '! Presente registrado com carinho.');
-            fechar();
-          } else {
-            aviso('Alguém acabou de escolher este presente. Escolha outro, por favor.', true);
-            fechar();
-          }
+        }).then(function () {
+          aviso('Obrigado, ' + nome.split(' ')[0] + '! Presente registrado com carinho.');
+          fechar();
         }).catch(function (e) {
           console.error(e);
           aviso('Não conseguimos registrar agora. Tente novamente.', true);

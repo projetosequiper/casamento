@@ -98,7 +98,9 @@ window.CONTEUDO = {
      e o item some da lista (fica marcado como "já presenteado").
 
      imagem: cole o link de uma foto (pode ser do próprio site da loja),
-             ou deixe '' para aparecer um ícone no lugar.            */
+             ou deixe '' para aparecer um ícone no lugar.
+     cotas:  divide o presente entre vários convidados. 1 = inteiro.
+             Depois de publicar a lista, tudo isso se edita no painel. */
   presentes: {
     titulo: 'Lista de presentes',
     texto: 'Sua presença já é o maior presente. Mas se quiser nos ajudar a montar o cantinho novo, ' +
@@ -114,15 +116,15 @@ window.CONTEUDO = {
       { id: 'p02', nome: 'Liquidificador',         valor: 280,  categoria: 'Cozinha',    imagem: '' },
       { id: 'p03', nome: 'Air fryer',              valor: 520,  categoria: 'Cozinha',    imagem: '' },
       { id: 'p04', nome: 'Jogo de taças de cristal', valor: 320, categoria: 'Mesa',      imagem: '' },
-      { id: 'p05', nome: 'Aparelho de jantar',     valor: 680,  categoria: 'Mesa',       imagem: '' },
+      { id: 'p05', nome: 'Aparelho de jantar',     valor: 680,  categoria: 'Mesa',       imagem: '', cotas: 4 },
       { id: 'p06', nome: 'Jogo de lençóis king',   valor: 390,  categoria: 'Quarto',     imagem: '' },
       { id: 'p07', nome: 'Edredom',                valor: 450,  categoria: 'Quarto',     imagem: '' },
       { id: 'p08', nome: 'Jogo de toalhas',        valor: 240,  categoria: 'Banho',      imagem: '' },
-      { id: 'p09', nome: 'Robô aspirador',         valor: 1200, categoria: 'Casa',       imagem: '' },
+      { id: 'p09', nome: 'Robô aspirador',         valor: 1200, categoria: 'Casa',       imagem: '', cotas: 6 },
       { id: 'p10', nome: 'Ferro de passar',        valor: 180,  categoria: 'Casa',       imagem: '' },
       { id: 'p11', nome: 'Uma diária da lua de mel', valor: 600, categoria: 'Lua de mel', imagem: '' },
       { id: 'p12', nome: 'Um jantar romântico na viagem', valor: 350, categoria: 'Lua de mel', imagem: '' },
-      { id: 'p13', nome: 'Um passeio de barco',    valor: 800,  categoria: 'Lua de mel', imagem: '' },
+      { id: 'p13', nome: 'Um passeio de barco',    valor: 800,  categoria: 'Lua de mel', imagem: '', cotas: 4 },
       { id: 'p14', nome: 'Contribuição livre',     valor: 0,    categoria: 'Lua de mel', imagem: '',
         descricao: 'Você escolhe o valor.' }
     ]

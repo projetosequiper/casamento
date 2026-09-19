@@ -14,7 +14,7 @@ Custo: **R$ 0,00** — só o domínio, se quiser um.
 | Cerimônia e recepção, com link do mapa | `#quando` |
 | Informações úteis (traje, hospedagem, transporte, crianças) | `#info` |
 | Confirmação de presença por lista fechada, com famílias | `#confirmar` |
-| Lista de presentes com PIX (QR Code + copia e cola) | `#presentes` |
+| Lista de presentes com PIX, com divisão em cotas | `#presentes` |
 | Mural de recados com moderação | `#recados` |
 | Galeria de fotos | `#galeria` |
 | Perguntas frequentes | `#faq` |
@@ -120,6 +120,50 @@ você logado na Área dos noivos.
 
 ---
 
+## Cotas: dividir um presente entre vários convidados
+
+Um item de R$ 1.200 afasta quase todo mundo. Dividido em 6 cotas de R$ 200,
+vira um presente que várias pessoas dão juntas.
+
+Na aba **Editar lista**, a coluna **Cotas** tem um campo em cada linha: digite
+o número, saia do campo e pronto — não precisa abrir o presente. O mesmo campo
+existe dentro do formulário, ao criar ou editar um item.
+
+- **1** — presente inteiro, uma pessoa só compra.
+- **mais de 1** — o site mostra o valor **por cota**, uma barrinha de progresso
+  e quantas ainda faltam. O convidado escolhe quantas quer dar no `+` e `−`,
+  e o PIX já sai com o valor certo.
+
+O painel não deixa reduzir o número de cotas abaixo do que já foi preenchido —
+senão alguém ficaria com uma cota que não existe mais.
+
+O presente só sai da lista quando **todas** as cotas são preenchidas.
+
+No painel, em **Presentes recebidos**, cada cota aparece como uma linha
+própria, com o nome de quem deu e quantas cotas pegou. Você confirma o
+recebimento de cada uma separadamente, conforme os PIX caem na conta.
+
+---
+
+## Fotos dos presentes
+
+Ainda em **Editar lista**, ao abrir um presente tem um quadro de foto que
+aceita três coisas:
+
+- **Clicar e escolher** um arquivo do computador
+- **Arrastar e soltar** a imagem em cima do quadro
+- **Colar um print** com Ctrl+V — útil para recortar da tela de uma loja
+
+Depois de carregar, **arraste a imagem dentro do quadro** para escolher o
+enquadramento e use o **Zoom** para aproximar. O site recorta em 4:3 e comprime
+automaticamente — cada foto fica em torno de 30 KB, então a lista continua
+rápida de abrir no celular.
+
+As fotos ficam guardadas separadas do resto, para os nomes e valores
+aparecerem primeiro e as imagens entrarem em seguida.
+
+---
+
 ## Passo 3 — Ligar o PIX
 
 Em `assets/js/conteudo.js`, procure `presentes.pix`:
@@ -153,7 +197,9 @@ O que essas regras fazem:
 - **Presentes**: qualquer um lê a lista (para saber o que já foi escolhido),
   mas ninguém consegue alterar ou apagar um presente já reservado — só você.
 - **Recados**: o convidado envia sempre como "não aprovado". Só você aprova.
-- **Catálogo**: qualquer um lê a lista de presentes; só você (logado) edita.
+- **Catálogo e fotos**: qualquer um lê a lista de presentes; só você (logado)
+  edita. Cada cota é gravada separada, e ninguém consegue alterar ou apagar
+  a cota de outra pessoa.
 - **Convidados**: qualquer um lê a lista de nomes (o site precisa dela para a
   busca funcionar); só você (logado) edita.
 
@@ -236,7 +282,7 @@ marcar quem é criança e corrigir nomes. Na primeira vez, clique em
 **Publicar a lista atual** para levar o arquivo `convidados.js` para o banco.
 
 **Editar lista** — adicionar, editar, esconder e excluir presentes, sem mexer
-em arquivo nenhum. Na primeira vez, clique em **Publicar a lista de exemplo**:
+em arquivo nenhum. É aqui que ficam as **cotas** e as **fotos**. Na primeira vez, clique em **Publicar a lista de exemplo**:
 isso copia os itens do `conteudo.js` para o banco. A partir daí, é esta tela
 que manda no que aparece no site — as mudanças entram no ar na hora, sem
 precisar subir nada no GitHub.
@@ -310,6 +356,8 @@ O site inteiro se adapta. Não precisa tocar em `estilo.css`.
 - [ ] Crianças marcadas, para a contagem do buffet fechar
 - [ ] Endereços e links de mapa testados no celular
 - [ ] Chave PIX testada de verdade (leia o QR no app do banco)
+- [ ] Presentes caros divididos em cotas
+- [ ] Fotos dos principais presentes
 - [ ] Regras do Firebase publicadas (senão o site não salva nada)
 - [ ] Senha da Área dos noivos funcionando
 - [ ] Lista de presentes publicada pelo painel (aba "Editar lista")
