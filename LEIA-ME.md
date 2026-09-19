@@ -243,6 +243,23 @@ precisar subir nada no GitHub.
 
 **Recados** — aprovar ou tirar do mural.
 
+## Quando você atualizar os arquivos
+
+O navegador guarda CSS e JavaScript por alguns minutos. Se você subir uma
+versão nova e a página continuar igual, é cache — não erro.
+
+- **Para ver na hora:** Ctrl + Shift + R (Cmd + Shift + R no Mac), ou abra
+  numa janela anônima.
+- **Para os convidados verem na hora:** no `index.html` e no `admin.html`,
+  os arquivos são chamados com `?v=2` no fim. Toda vez que você mudar um CSS
+  ou JS, **suba o número** (`?v=3`, `?v=4`...). Isso faz o navegador de todo
+  mundo baixar a versão nova imediatamente.
+
+Isso só vale para mudanças em arquivo. O que você edita pelo painel
+(convidados, lista de presentes) aparece na hora, sem cache nenhum.
+
+---
+
 ## Passo 7 — Quando a identidade visual chegar
 
 Abra `assets/css/tema.css`. Tudo que é visual está lá em cima, comentado:
