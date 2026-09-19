@@ -1,0 +1,96 @@
+/* ============================================================
+   TEMA — ESTE É O ÚNICO ARQUIVO QUE VOCÊ MEXE PARA MUDAR O VISUAL
+   ------------------------------------------------------------
+   Paleta atual: verde-oliva + creme + papel texturizado,
+   inspirada nas referências de papelaria do casamento.
+
+   Quando a identidade visual oficial chegar, troque:
+     1. As fontes (linha @import + --fonte-*)
+     2. As cores (--cor-*)
+     3. O arredondamento (--raio)
+   O site inteiro se adapta sozinho.
+   ============================================================ */
+
+/* ---- 1. FONTES ------------------------------------------------
+   Cormorant Garamond → títulos (serifa clássica de convite)
+   Pinyon Script      → monograma e assinaturas
+   Jost               → textos, botões e formulários            */
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Pinyon+Script&family=Jost:wght@300;400;500&display=swap');
+
+:root {
+  --fonte-titulo:  'Cormorant Garamond', 'Times New Roman', serif;
+  --fonte-texto:   'Jost', -apple-system, 'Segoe UI', sans-serif;
+  --fonte-detalhe: 'Pinyon Script', 'Cormorant Garamond', cursive;
+
+  /* ---- 2. CORES ----------------------------------------------
+     Verde-oliva das folhagens + creme do papel de algodão.      */
+  --cor-fundo:           #faf7f0;  /* creme do papel              */
+  --cor-fundo-alt:       #f1ede1;  /* creme mais fechado          */
+  --cor-fundo-escuro:    #39432f;  /* verde profundo (rodapé)     */
+  --cor-superficie:      #fffdf8;  /* cartões e formulários       */
+
+  --cor-texto:           #3b4034;  /* verde-grafite               */
+  --cor-texto-suave:     #7b8070;
+  --cor-texto-claro:     #f6f3ea;
+
+  --cor-destaque:        #7c8b63;  /* verde-oliva das folhas      */
+  --cor-destaque-escuro: #5e6c48;
+  --cor-destaque-suave:  #e8e9dc;  /* fundo delicado do destaque  */
+
+  --cor-borda:           #e0ddcd;
+  --cor-sucesso:         #5e7150;
+  --cor-erro:            #a4584c;
+
+  /* ---- 3. FORMA ----------------------------------------------
+     Cantos quase retos: papelaria clássica não tem borda redonda. */
+  --raio:        2px;
+  --raio-grande: 3px;
+  --sombra:      0 1px 2px rgba(59, 64, 52, .04), 0 10px 30px rgba(59, 64, 52, .05);
+  --sombra-alta: 0 4px 14px rgba(59, 64, 52, .08), 0 24px 56px rgba(59, 64, 52, .10);
+
+  /* ---- 4. ESCALA DE TEXTO ------------------------------------ */
+  --t-hero:   clamp(3rem, 12vw, 7rem);
+  --t-secao:  clamp(1.9rem, 5.2vw, 3rem);
+  --t-sub:    clamp(1.15rem, 2.6vw, 1.45rem);
+  --t-corpo:  1.0625rem;
+  --t-peq:    .875rem;
+  --t-micro:  .75rem;
+
+  /* ---- 5. ESPAÇAMENTO ---------------------------------------- */
+  --esp-secao: clamp(4.5rem, 11vw, 8.5rem);
+  --largura:   1140px;
+  --largura-texto: 660px;
+
+  /* ---- 6. DETALHES ------------------------------------------- */
+  --tracking-titulo: .24em;
+  --transicao: .35s cubic-bezier(.4, 0, .2, 1);
+  /* textura sutil de papel aplicada ao fundo do site */
+  --textura-papel: url('../img/papel.png');
+}
+
+/* ---- 7. FOTO DE CAPA (OPCIONAL) --------------------------------
+   Por padrão a capa é clara, no estilo convite, sem foto.
+   Para usar uma foto do casal, preencha `capa.foto` no
+   arquivo assets/js/conteudo.js — o texto vira claro sozinho.    */
+.hero--com-foto {
+  --hero-escurecer: .45;   /* 0 = foto original · 1 = bem escuro  */
+}
+
+/* ---- 8. VERSÃO ESCURA (OPCIONAL) -------------------------------
+   Desligada por padrão. Para ativar, coloque data-tema="escuro"
+   na tag <html> do index.html.                                   */
+:root[data-tema="escuro"] {
+  --cor-fundo:        #22261d;
+  --cor-fundo-alt:    #2a2f24;
+  --cor-fundo-escuro: #191c15;
+  --cor-superficie:   #2d3226;
+  --cor-texto:        #e9e7da;
+  --cor-texto-suave:  #a5a795;
+  --cor-destaque:     #a3b287;
+  --cor-destaque-escuro: #bcc9a3;
+  --cor-destaque-suave: #333a29;
+  --cor-borda:        #3d4434;
+  --textura-papel:    none;
+  --sombra:      0 1px 3px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.25);
+  --sombra-alta: 0 4px 12px rgba(0,0,0,.4), 0 20px 48px rgba(0,0,0,.35);
+}
