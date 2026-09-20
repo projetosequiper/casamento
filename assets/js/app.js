@@ -146,16 +146,58 @@
     }).join('');
   })();
 
-  /* ---------- eventos (cerimônia / recepção) ---------- */
+  /* ---------- eventos (cerimônia / recepção) ----------
+     Os links de rota vão SEM ponto de partida. Sem origem definida,
+     o Google Maps e o Waze usam a localização atual de quem clicou. */
+  function ehCoordenada(t) {
+    return /^\s*-?\d{1,3}(\.\d+)?\s*,\s*-?\d{1,3}(\.\d+)?\s*$/.test(t || '');
+  }
+
+  function rotas(e) {
+    if (e.semRota) return null;
+
+    var coord = (e.coordenadas || '').replace(/\s/g, '');
+
+    /* sem coordenadas, monta uma busca limpa: tira separadores
+       decorativos que só atrapalham o mapa a achar o lugar */
+    var busca = [e.local, e.endereco].filter(Boolean).join(', ')
+      .replace(/[|·–—]/g, ' ')
+      .replace(/\s{2,}/g, ' ')
+      .trim();
+
+    var destino = ehCoordenada(coord) ? coord : busca;
+    if (!destino) return null;
+
+    return {
+      google: 'https://www.google.com/maps/dir/?api=1' +
+              '&destination=' + encodeURIComponent(destino) +
+              '&travelmode=driving',
+      waze: ehCoordenada(coord)
+        ? 'https://waze.com/ul?ll=' + encodeURIComponent(coord) + '&navigate=yes'
+        : 'https://waze.com/ul?q=' + encodeURIComponent(destino) + '&navigate=yes'
+    };
+  }
+
   $('#eventos').innerHTML = (C.eventos || []).map(function (e) {
+    var r = e.mapa ? { google: e.mapa, waze: '' } : rotas(e);
+
     return '<article class="cartao">' +
       '<span class="cartao__tipo">' + escapar(e.tipo) + '</span>' +
       '<p class="cartao__hora">' + escapar(e.horario) + '</p>' +
       '<h3 class="cartao__local">' + escapar(e.local) + '</h3>' +
       '<p class="cartao__endereco">' + escapar(e.endereco) + '</p>' +
       (e.observacao ? '<p class="cartao__obs">' + escapar(e.observacao) + '</p>' : '') +
-      (e.mapa ? '<a class="botao botao--vazado botao--pequeno" target="_blank" rel="noopener" href="' +
-                escapar(e.mapa) + '">Ver no mapa</a>' : '') +
+      (r
+        ? '<div class="rotas">' +
+            '<a class="botao botao--vazado botao--pequeno" target="_blank" rel="noopener" href="' +
+              escapar(r.google) + '">Como chegar</a>' +
+            (r.waze
+              ? '<a class="botao botao--vazado botao--pequeno" target="_blank" rel="noopener" href="' +
+                escapar(r.waze) + '">Waze</a>'
+              : '') +
+          '</div>' +
+          '<p class="rotas__nota">A rota começa de onde você estiver.</p>'
+        : '') +
       '</article>';
   }).join('');
 

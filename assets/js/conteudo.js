@@ -56,7 +56,23 @@ window.CONTEUDO = {
 
   /* ---------- CERIMÔNIA E FESTA ----------
      Cerimônia e recepção acontecem no mesmo endereço.
-     CONFERIR os horários abaixo — ainda são estimativas.        */
+     CONFERIR os horários abaixo — ainda são estimativas.
+
+     COMO O BOTÃO DE ROTA FUNCIONA
+     -----------------------------
+     O site monta um link de ROTA sem ponto de partida. Assim o
+     Google Maps e o Waze usam sempre a localização atual de quem
+     clicou — não importa de onde a pessoa esteja.
+
+     coordenadas: o jeito mais confiável de apontar o destino.
+       Abra o Google Maps, clique com o botão direito em cima do
+       local, e o primeiro item do menu já são as coordenadas —
+       clique nelas para copiar e cole aqui como 'lat,long'.
+       Vazio: usamos o nome + endereço para achar o lugar.
+
+     mapa: deixe vazio. Só preencha se quiser forçar um link
+       específico — e cuidado: link copiado do app de mapas
+       costuma vir com o SEU ponto de partida embutido.          */
   eventos: [
     {
       tipo: 'Cerimônia',
@@ -65,7 +81,8 @@ window.CONTEUDO = {
       endereco: 'BR-040, Km 69 — Itaipava, Petrópolis/RJ · CEP 25665-060',
       observacao: 'Depois da antiga fábrica de café solúvel. ' +
                   'Pedimos a gentileza de chegar 30 minutos antes.',
-      mapa: 'https://www.google.com/maps/search/?api=1&query=Casa+do+Lago+Enfesta+BR-040+Km+69+Itaipava+Petr%C3%B3polis+RJ'
+      coordenadas: '',                                   // PREENCHER — ex.: '-22.3089,-43.1234'
+      mapa: ''
     },
     {
       tipo: 'Recepção',
@@ -73,7 +90,9 @@ window.CONTEUDO = {
       local: 'Casa do Lago | Enfesta',
       endereco: 'No mesmo endereço, logo após a cerimônia — sem deslocamento.',
       observacao: 'Estacionamento no local.',            // CONFERIR
-      mapa: ''
+      coordenadas: '',
+      mapa: '',
+      semRota: true                                      // não repete os botões de rota
     }
   ],
 

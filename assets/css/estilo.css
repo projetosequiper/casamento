@@ -468,6 +468,12 @@ section[id] { scroll-margin-top: 80px; }
 .cartao p.cartao__endereco { font-size: .95rem; margin: 0 0 .8rem; }
 .cartao p.cartao__obs { font-size: .9rem; font-style: italic; margin: 0 0 1.5rem; }
 
+.rotas { display: flex; gap: .5rem; justify-content: center; flex-wrap: wrap; }
+.rotas__nota {
+  font-size: var(--t-micro); letter-spacing: .06em;
+  color: var(--cor-texto-suave); margin: .8rem 0 0;
+}
+
 /* ---------- FORMULÁRIOS ---------- */
 .formulario {
   background: var(--cor-superficie);

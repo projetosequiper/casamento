@@ -164,6 +164,27 @@ aparecerem primeiro e as imagens entrarem em seguida.
 
 ---
 
+## O botão de rota
+
+Cada evento tem **Como chegar** (Google Maps) e **Waze**. Os dois links são
+montados **sem ponto de partida** — sem origem definida, os aplicativos usam
+a localização atual de quem clicou, de onde quer que a pessoa esteja.
+
+> Nunca cole no campo `mapa` um link copiado do app de mapas depois de traçar
+> uma rota: esse link vem com o **seu** ponto de partida embutido, e todo
+> convidado recebe a rota saindo de onde você estava.
+
+**Para o destino ficar exato**, preencha `coordenadas` em `conteudo.js`:
+abra o Google Maps, clique com o botão direito em cima do local (no celular,
+segure o dedo) e o primeiro item do menu já são as coordenadas — copie e cole
+como `'-22.3089,-43.1234'`.
+
+Sem coordenadas, o site usa o nome + endereço, que funciona mas depende do
+mapa acertar o lugar. Para um sítio na serra, sem número na estrada, as
+coordenadas são bem mais seguras.
+
+---
+
 ## Passo 3 — Ligar o PIX
 
 Em `assets/js/conteudo.js`, procure `presentes.pix`:
