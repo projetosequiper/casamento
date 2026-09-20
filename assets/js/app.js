@@ -50,7 +50,7 @@
     if (promessaQR) return promessaQR;
     promessaQR = new Promise(function (ok, erro) {
       var s = document.createElement('script');
-      s.src = 'https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js';
+      s.src = 'assets/js/lib/qrcode.js';          /* vai junto com o site */
       s.onload = function () { typeof QRCode !== 'undefined' ? ok() : erro(); };
       s.onerror = erro;
       document.head.appendChild(s);
@@ -575,6 +575,7 @@
     var itens = padrao;
     var dadosPresentes = {};   /* presentes/{item}/{contribuicao} */
     var imagens = {};
+    var configPix = null;      /* chave PIX salva no painel */
     var filtro = 'todos';
 
     /* aceita o formato antigo (uma contribuição solta por item) */
@@ -609,6 +610,9 @@
 
     DADOS.ouvirPresentes(function (dados) { dadosPresentes = dados || {}; pintar(); });
     DADOS.ouvirImagens(function (dados) { imagens = dados || {}; pintar(); });
+    DADOS.ouvirConfig(function (cfg) {
+      configPix = (cfg && cfg.pix && cfg.pix.chave) ? cfg.pix : null;
+    });
 
     /* ---------- filtros ---------- */
     function montarFiltros() {
@@ -781,7 +785,8 @@
     }
 
     function montarPix(item, valor, cotas) {
-      var p = C.presentes.pix || {};
+      /* a chave salva no painel manda; sem ela, usa a do conteudo.js */
+      var p = configPix || C.presentes.pix || {};
       var codigo = PIX.gerar({
         chave: p.chave,
         nomeRecebedor: p.nomeRecebedor,

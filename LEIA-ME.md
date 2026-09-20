@@ -187,21 +187,34 @@ coordenadas são bem mais seguras.
 
 ## Passo 3 — Ligar o PIX
 
-Em `assets/js/conteudo.js`, procure `presentes.pix`:
+Faz-se pelo painel, na aba **PIX** — não precisa editar arquivo.
 
-```js
-pix: {
-  chave: 'exemplo@email.com.br',   // sua chave PIX
-  nomeRecebedor: 'YANNE E JULIO',  // até 25 caracteres, SEM acento
-  cidade: 'BELO HORIZONTE'         // até 15 caracteres, SEM acento
-}
-```
+**O jeito mais rápido:** abra o app do seu banco, vá em *Receber por PIX*,
+tire um print do QR Code e **arraste esse print** para o quadro da aba PIX
+(ou cole com Ctrl+V). O site **lê o QR Code**, extrai a chave, o nome e a
+cidade, e preenche os três campos sozinho. Confira e clique em **Salvar**.
 
-A chave pode ser CPF, e-mail, telefone (`+5531999999999`) ou chave aleatória.
+Também funciona colar o **código copia e cola** do banco no lugar do print.
 
-**Teste antes de divulgar**: abra a lista de presentes, gere um PIX de um item
-barato e leia o QR Code no app do banco. Tem que aparecer o seu nome e o valor
-certinho. Se aparecer, está tudo funcionando.
+Se preferir, dá para digitar na mão: a chave pode ser CPF, e-mail,
+telefone (`+5521999998888`) ou chave aleatória.
+
+> Nome até 25 e cidade até 15 caracteres, sem acento — é regra do padrão do
+> Banco Central. O site corta e tira os acentos sozinho se precisar.
+
+### Teste antes de divulgar
+
+Na mesma aba, clique em **Testar com R$ 1,00**. Aparece um QR Code de teste:
+leia no app do seu banco e confira se mostra **o seu nome** e **R$ 1,00**.
+Não finalize o pagamento — é só conferência. Se o nome estiver certo, todos
+os presentes vão funcionar.
+
+**Por que o site gera o código em vez de usar o seu QR:** o QR do banco tem
+valor fixo (ou nenhum). O site monta um código novo para cada presente, com o
+valor exato daquele item ou daquela cota — o convidado não precisa digitar
+nada, e você recebe o valor certo.
+
+A chave salva no painel tem prioridade sobre a que está no `conteudo.js`.
 
 ---
 

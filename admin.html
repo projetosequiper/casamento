@@ -6,8 +6,8 @@
   <title>Área dos noivos</title>
   <meta name="robots" content="noindex, nofollow">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍃</text></svg>">
-  <link rel="stylesheet" href="assets/css/tema.css?v=5">
-  <link rel="stylesheet" href="assets/css/estilo.css?v=5">
+  <link rel="stylesheet" href="assets/css/tema.css?v=6">
+  <link rel="stylesheet" href="assets/css/estilo.css?v=6">
   <style>
     body { background: var(--cor-fundo-alt); }
 
@@ -172,6 +172,41 @@
     .foto-zoom span { font-size: var(--t-micro); letter-spacing: .1em; text-transform: uppercase; color: var(--cor-texto-suave); }
     .foto-zoom input { flex: 1; accent-color: var(--cor-destaque); }
 
+    .campo-pix { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit,minmax(220px,1fr)); }
+    .campo-pix input {
+      width: 100%; background: var(--cor-fundo); border: 1px solid var(--cor-borda);
+      border-radius: var(--raio); padding: .8rem 1rem; font: inherit; color: var(--cor-texto);
+    }
+    .campo-pix input:focus {
+      outline: none; border-color: var(--cor-destaque); box-shadow: 0 0 0 3px var(--cor-destaque-suave);
+    }
+    .campo-pix label { display: block; }
+    .campo-pix .campo__rotulo { margin-bottom: .5rem; }
+
+    .qr-solta {
+      border: 1px dashed var(--cor-borda); border-radius: var(--raio);
+      background: var(--cor-fundo); padding: 1.6rem 1rem; text-align: center;
+      cursor: pointer; transition: all var(--transicao);
+    }
+    .qr-solta:hover, .qr-solta--sobre { border-color: var(--cor-destaque); background: var(--cor-destaque-suave); }
+    .qr-solta strong { display: block; font-weight: 500; font-size: .95rem; }
+    .qr-solta span { font-size: .82rem; color: var(--cor-texto-suave); }
+
+    .teste-pix { display: flex; gap: 1.4rem; flex-wrap: wrap; align-items: flex-start; }
+    .teste-pix__qr {
+      width: 180px; height: 180px; flex: 0 0 auto; padding: 10px; background: #fff;
+      border: 1px solid var(--cor-borda); border-radius: var(--raio);
+      display: grid; place-items: center;
+    }
+    .teste-pix__qr img, .teste-pix__qr canvas { width: 100% !important; height: 100% !important; }
+    .teste-pix__lado { flex: 1 1 260px; min-width: 0; }
+    .teste-pix__codigo {
+      width: 100%; font-family: ui-monospace, Menlo, monospace; font-size: .68rem;
+      line-height: 1.5; background: var(--cor-fundo); color: var(--cor-texto-suave);
+      border: 1px solid var(--cor-borda); border-radius: var(--raio);
+      padding: .7rem; resize: none; height: 90px; word-break: break-all;
+    }
+
     .cota-inline {
       width: 68px; text-align: center;
       background: var(--cor-fundo); border: 1px solid var(--cor-borda);
@@ -239,6 +274,7 @@
     <button class="aba" role="tab" data-aba="presentes"    aria-selected="false">Presentes recebidos</button>
     <button class="aba" role="tab" data-aba="catalogo"     aria-selected="false">Editar lista</button>
     <button class="aba" role="tab" data-aba="recados"      aria-selected="false">Recados</button>
+    <button class="aba" role="tab" data-aba="pix"          aria-selected="false">PIX</button>
   </div>
 
   <div class="barra-acoes" id="barra-acoes">
@@ -366,10 +402,11 @@
 
 <div class="aviso-flutuante" id="aviso" role="status" aria-live="polite"></div>
 
-<script src="assets/js/conteudo.js?v=5"></script>
-<script src="assets/js/convidados.js?v=5"></script>
-<script src="assets/js/firebase-config.js?v=5"></script>
-<script src="assets/js/dados.js?v=5"></script>
-<script src="assets/js/admin.js?v=5"></script>
+<script src="assets/js/conteudo.js?v=6"></script>
+<script src="assets/js/convidados.js?v=6"></script>
+<script src="assets/js/firebase-config.js?v=6"></script>
+<script src="assets/js/pix.js?v=6"></script>
+<script src="assets/js/dados.js?v=6"></script>
+<script src="assets/js/admin.js?v=6"></script>
 </body>
 </html>

@@ -120,6 +120,27 @@ window.DADOS = (function () {
       });
     },
 
+    /* ---------- CONFIGURAÇÕES (chave PIX etc.) ----------
+       Ficam no banco para serem editadas pelo painel. Vazio,
+       o site usa o que está no conteudo.js.                      */
+    ouvirConfig: function (cb) {
+      iniciar().then(function (ok) {
+        if (!ok) return ouvirLocal('config', cb);
+        ref('config').on('value', function (snap) { cb(snap.val() || {}); });
+      });
+    },
+
+    salvarConfig: function (campos) {
+      return iniciar().then(function (ok) {
+        if (!ok) {
+          var atual = LOCAL.ler('config', {});
+          LOCAL.gravar('config', Object.assign(atual, campos));
+          return true;
+        }
+        return ref('config').update(campos);
+      });
+    },
+
     /* ---------- LISTA DE CONVIDADOS ----------
        Fica no banco para ser editada pelo painel. Enquanto
        estiver vazia, o site usa a lista do convidados.js.       */

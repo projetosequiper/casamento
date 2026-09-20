@@ -98,7 +98,7 @@
   function familiasPublicadas() { return Object.keys(estado.familias).length > 0; }
 
   /* ---------- estado ---------- */
-  var estado = { confirmacoes: {}, presentes: {}, recados: {}, catalogo: {}, familias: {}, imagens: {} };
+  var estado = { confirmacoes: {}, presentes: {}, recados: {}, catalogo: {}, familias: {}, imagens: {}, config: {} };
   var abaAtiva = 'resumo';
   var busca = '';
 
@@ -166,6 +166,7 @@
     DADOS.ouvirRecados(function (d)      { estado.recados      = d || {}; pintar(); });
     DADOS.ouvirCatalogo(function (d)     { estado.catalogo     = d || {}; pintar(); });
     DADOS.ouvirImagens(function (d)      { estado.imagens      = d || {}; pintar(); });
+    DADOS.ouvirConfig(function (d)       { estado.config       = d || {}; pintar(); });
     DADOS.ouvirFamilias(function (d) {
       estado.familias = d || {};
       var chaves = Object.keys(estado.familias);
@@ -300,19 +301,22 @@
 
     /* se o usuário está digitando numa célula, não redesenha por baixo dele */
     var foco = document.activeElement;
-    if (foco && foco.classList && foco.classList.contains('cota-inline')) return;
+    if (foco && $('#conteudo-aba').contains(foco) &&
+        /^(INPUT|TEXTAREA|SELECT)$/.test(foco.tagName)) return;
     $('#novo-item').classList.toggle('oculto', abaAtiva !== 'catalogo');
     $('#nova-familia').classList.toggle('oculto', abaAtiva !== 'convidados');
     $('#exportar').classList.toggle('oculto',
-      abaAtiva === 'resumo' || abaAtiva === 'catalogo' || abaAtiva === 'convidados');
-    $('#busca').classList.toggle('oculto', abaAtiva === 'resumo');
-    $('#barra-acoes').classList.toggle('oculto', abaAtiva === 'resumo');
+      abaAtiva === 'resumo' || abaAtiva === 'catalogo' ||
+      abaAtiva === 'convidados' || abaAtiva === 'pix');
+    $('#busca').classList.toggle('oculto', abaAtiva === 'resumo' || abaAtiva === 'pix');
+    $('#barra-acoes').classList.toggle('oculto', abaAtiva === 'resumo' || abaAtiva === 'pix');
 
     if (abaAtiva === 'resumo')            pintarResumo();
     else if (abaAtiva === 'confirmacoes') pintarConfirmacoes();
     else if (abaAtiva === 'presentes')    pintarPresentes();
     else if (abaAtiva === 'catalogo')     pintarCatalogo();
     else if (abaAtiva === 'convidados')   pintarConvidados();
+    else if (abaAtiva === 'pix')          pintarPix();
     else                                  pintarRecados();
   }
 
@@ -680,6 +684,242 @@
     DADOS.salvarFamilias(mapa).then(function () {
       aviso('Lista publicada. Agora dá para editar por aqui.');
     }).catch(function () { aviso('Não conseguimos publicar a lista.', true); });
+  }
+
+  /* ---------- PIX ---------- */
+  function pixEmUso() {
+    var doBanco = (estado.config && estado.config.pix) || {};
+    var doArquivo = (C.presentes && C.presentes.pix) || {};
+    return {
+      chave: doBanco.chave || doArquivo.chave || '',
+      nomeRecebedor: doBanco.nomeRecebedor || doArquivo.nomeRecebedor || '',
+      cidade: doBanco.cidade || doArquivo.cidade || '',
+      qrProprio: doBanco.qrProprio || '',
+      doBanco: !!doBanco.chave
+    };
+  }
+
+  function pintarPix() {
+    if ($('#form-pix')) return;          /* já montado: não redesenha por cima */
+    var p = pixEmUso();
+
+    $('#conteudo-aba').innerHTML =
+      '<form class="bloco" id="form-pix">' +
+        '<h2>Sua chave PIX</h2>' +
+        '<p class="bloco__sub">É para esta chave que os presentes vão. ' +
+          'O site gera um código diferente para cada presente, já com o valor certo.</p>' +
+
+        '<div class="qr-solta" id="qr-solta" tabindex="0" role="button">' +
+          '<strong>Tem um print do seu QR Code?</strong>' +
+          '<span>Clique, arraste o arquivo aqui, ou cole com Ctrl+V — eu leio o código e preencho tudo sozinho.</span>' +
+        '</div>' +
+        '<input type="file" id="qr-input" accept="image/*" hidden>' +
+
+        '<div class="campo-pix" style="margin-top:1.4rem">' +
+          '<label><span class="campo__rotulo">Chave PIX</span>' +
+            '<input type="text" id="pix-chave" value="' + escapar(p.chave) + '" ' +
+              'placeholder="CPF, e-mail, telefone ou chave aleatória"></label>' +
+          '<label><span class="campo__rotulo">Nome do recebedor</span>' +
+            '<input type="text" id="pix-nome-rec" maxlength="25" value="' + escapar(p.nomeRecebedor) + '" ' +
+              'placeholder="YANNE E JULIO"></label>' +
+          '<label><span class="campo__rotulo">Cidade</span>' +
+            '<input type="text" id="pix-cidade" maxlength="15" value="' + escapar(p.cidade) + '" ' +
+              'placeholder="PETROPOLIS"></label>' +
+        '</div>' +
+        '<p class="campo__ajuda">Nome até 25 e cidade até 15 caracteres, sem acento — é regra do padrão do Banco Central. ' +
+          'Eu ajusto sozinho se passar.</p>' +
+
+        '<div style="display:flex;gap:.6rem;flex-wrap:wrap;margin-top:1.2rem">' +
+          '<button type="submit" class="botao">Salvar chave PIX</button>' +
+          '<button type="button" class="mini" id="pix-testar">Testar com R$ 1,00</button>' +
+        '</div>' +
+        '<p class="campo__ajuda" id="pix-origem">' +
+          (p.doBanco ? 'Em uso: a chave salva aqui no painel.'
+                     : 'Em uso: a chave que está no arquivo conteudo.js. Salve aqui para o painel passar a mandar.') +
+        '</p>' +
+      '</form>' +
+
+      '<div class="bloco oculto" id="bloco-teste">' +
+        '<h2>Teste</h2>' +
+        '<p class="bloco__sub">Leia este QR Code no app do seu banco. Tem que aparecer o seu nome e R$ 1,00. ' +
+          'Não finalize o pagamento — é só para conferir.</p>' +
+        '<div class="teste-pix">' +
+          '<div class="teste-pix__qr" id="teste-qr"></div>' +
+          '<div class="teste-pix__lado">' +
+            '<textarea class="teste-pix__codigo" id="teste-codigo" readonly></textarea>' +
+            '<p class="campo__ajuda" id="teste-conferido"></p>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+
+    montarPix();
+  }
+
+  function montarPix() {
+    /* --- ler QR Code de um print --- */
+    var solta = $('#qr-solta'), entrada = $('#qr-input');
+
+    function carregarJsQR() {
+      if (window.jsQR) return Promise.resolve();
+      return new Promise(function (ok, erro) {
+        var s = document.createElement('script');
+        s.src = 'assets/js/lib/jsqr.js';          /* vai junto com o site */
+        s.onload = function () { window.jsQR ? ok() : erro(); };
+        s.onerror = erro;
+        document.head.appendChild(s);
+      });
+    }
+
+    function lerImagem(file) {
+      if (!file || file.type.indexOf('image/') !== 0) return;
+      aviso('Lendo o QR Code...');
+      carregarJsQR().then(function () {
+        var leitor = new FileReader();
+        leitor.onload = function (e) {
+          var img = new Image();
+          img.onload = function () {
+            /* reduz imagens muito grandes, mas mantém nitidez do código */
+            var max = 1400;
+            var escala = Math.min(1, max / Math.max(img.width, img.height));
+            var cv = document.createElement('canvas');
+            cv.width = Math.round(img.width * escala);
+            cv.height = Math.round(img.height * escala);
+            var cx = cv.getContext('2d');
+            cx.drawImage(img, 0, 0, cv.width, cv.height);
+            var dados = cx.getImageData(0, 0, cv.width, cv.height);
+            var achado = window.jsQR(dados.data, cv.width, cv.height, { inversionAttempts: 'attemptBoth' });
+
+            if (!achado) {
+              return aviso('Não consegui ler o QR Code nessa imagem. Tente um print mais nítido, ' +
+                           'ou preencha a chave na mão abaixo.', true);
+            }
+
+            var lido = PIX.ler(achado.data);
+            if (!lido || !lido.chave) {
+              return aviso('Esse QR Code não parece ser um PIX. Confira se é o código de recebimento.', true);
+            }
+
+            $('#pix-chave').value = lido.chave;
+            if (lido.nomeRecebedor) $('#pix-nome-rec').value = lido.nomeRecebedor;
+            if (lido.cidade) $('#pix-cidade').value = lido.cidade;
+            aviso('Chave lida do QR Code: ' + lido.chave + '. Confira e salve.');
+          };
+          img.onerror = function () { aviso('Não consegui abrir essa imagem.', true); };
+          img.src = e.target.result;
+        };
+        leitor.readAsDataURL(file);
+      }).catch(function () {
+        aviso('Não consegui carregar o leitor de QR Code. Preencha a chave na mão.', true);
+      });
+    }
+
+    solta.addEventListener('click', function () { entrada.click(); });
+    solta.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); entrada.click(); }
+    });
+    entrada.addEventListener('change', function () { lerImagem(this.files[0]); this.value = ''; });
+
+    ['dragenter', 'dragover'].forEach(function (ev) {
+      solta.addEventListener(ev, function (e) { e.preventDefault(); this.classList.add('qr-solta--sobre'); });
+    });
+    ['dragleave', 'drop'].forEach(function (ev) {
+      solta.addEventListener(ev, function (e) { e.preventDefault(); this.classList.remove('qr-solta--sobre'); });
+    });
+    solta.addEventListener('drop', function (e) {
+      if (e.dataTransfer.files && e.dataTransfer.files[0]) lerImagem(e.dataTransfer.files[0]);
+    });
+
+    document.addEventListener('paste', function (e) {
+      if (abaAtiva !== 'pix' || !$('#form-pix')) return;
+      var itens = (e.clipboardData || {}).items || [];
+      for (var i = 0; i < itens.length; i++) {
+        if (itens[i].type.indexOf('image/') === 0) { lerImagem(itens[i].getAsFile()); e.preventDefault(); return; }
+      }
+      /* colou o código copia e cola em vez da imagem */
+      var texto = (e.clipboardData || {}).getData && e.clipboardData.getData('text');
+      if (texto && texto.indexOf('BR.GOV.BCB.PIX') !== -1) {
+        var lido = PIX.ler(texto);
+        if (lido && lido.chave) {
+          $('#pix-chave').value = lido.chave;
+          if (lido.nomeRecebedor) $('#pix-nome-rec').value = lido.nomeRecebedor;
+          if (lido.cidade) $('#pix-cidade').value = lido.cidade;
+          aviso('Chave lida do código colado: ' + lido.chave);
+          e.preventDefault();
+        }
+      }
+    });
+
+    /* --- salvar --- */
+    $('#form-pix').addEventListener('submit', function (e) {
+      e.preventDefault();
+      var chave = $('#pix-chave').value.trim();
+      if (chave.length < 4) return aviso('Escreva a chave PIX.', true);
+
+      var campos = {
+        chave: chave,
+        nomeRecebedor: $('#pix-nome-rec').value.trim(),
+        cidade: $('#pix-cidade').value.trim()
+      };
+
+      var b = this.querySelector('button[type=submit]');
+      b.disabled = true; b.textContent = 'Salvando...';
+
+      DADOS.salvarConfig({ pix: campos })
+        .then(function () {
+          aviso('Chave PIX salva. Já vale no site.');
+          $('#pix-origem').textContent = 'Em uso: a chave salva aqui no painel.';
+        })
+        .catch(function (err) { aviso(explicarErro(err), true); })
+        .finally(function () { b.disabled = false; b.textContent = 'Salvar chave PIX'; });
+    });
+
+    /* --- testar --- */
+    $('#pix-testar').addEventListener('click', function () {
+      var codigo = PIX.gerar({
+        chave: $('#pix-chave').value.trim(),
+        nomeRecebedor: $('#pix-nome-rec').value.trim(),
+        cidade: $('#pix-cidade').value.trim(),
+        valor: 1,
+        identificador: 'TESTE'
+      });
+      if (!codigo) return aviso('Preencha a chave PIX antes de testar.', true);
+
+      $('#bloco-teste').classList.remove('oculto');
+      $('#teste-codigo').value = codigo;
+      var lido = PIX.ler(codigo);
+      $('#teste-conferido').textContent = lido && lido.valido
+        ? 'Código íntegro. Recebedor: ' + (lido.nomeRecebedor || '—') +
+          ' · ' + (lido.cidade || '—') + ' · R$ 1,00'
+        : 'Algo saiu errado ao montar o código.';
+
+      $('#teste-qr').innerHTML = '';
+      garantirQR().then(function () {
+        new QRCode($('#teste-qr'), {
+          text: codigo, width: 170, height: 170,
+          colorDark: '#000000', colorLight: '#ffffff',
+          correctLevel: QRCode.CorrectLevel.M
+        });
+      }).catch(function () {
+        $('#teste-qr').innerHTML = '<p style="font-size:.78rem;color:var(--cor-texto-suave);padding:.8rem">' +
+                                   'Use o código ao lado.</p>';
+      });
+      $('#bloco-teste').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    });
+  }
+
+  /* biblioteca de QR Code, sob demanda */
+  var promessaQR = null;
+  function garantirQR() {
+    if (typeof QRCode !== 'undefined') return Promise.resolve();
+    if (promessaQR) return promessaQR;
+    promessaQR = new Promise(function (ok, erro) {
+      var s = document.createElement('script');
+      s.src = 'assets/js/lib/qrcode.js';          /* vai junto com o site */
+      s.onload = function () { typeof QRCode !== 'undefined' ? ok() : erro(); };
+      s.onerror = erro;
+      document.head.appendChild(s);
+    });
+    return promessaQR;
   }
 
   /* ---------- RECADOS ---------- */

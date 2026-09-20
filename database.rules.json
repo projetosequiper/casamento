@@ -27,6 +27,19 @@
         }
       },
 
+      "config": {
+        ".read": true,
+        ".write": "auth != null",
+        "pix": {
+          "chave":         { ".validate": "newData.isString() && newData.val().length <= 120" },
+          "nomeRecebedor": { ".validate": "newData.isString() && newData.val().length <= 25" },
+          "cidade":        { ".validate": "newData.isString() && newData.val().length <= 15" },
+          "qrProprio":     { ".validate": "newData.isString() && newData.val().length <= 400000" },
+          "$outro": { ".validate": false }
+        },
+        "$outro": { ".validate": false }
+      },
+
       "familias": {
         ".read": true,
         "$familia": {

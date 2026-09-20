@@ -89,5 +89,47 @@ window.PIX = (function () {
     return corpo.slice(-4) === '6304' && crc16(corpo) === informado;
   }
 
-  return { gerar: gerar, validar: validar, crc16: crc16 };
+  /* ---------- LEITURA DE UM CÓDIGO PIX ----------
+     Desmonta o BR Code em campos, para extrair a chave, o nome e
+     a cidade de um QR Code que o banco gerou.                     */
+  function desmontar(str) {
+    var campos = {}, i = 0;
+    while (i + 4 <= str.length) {
+      var id = str.substr(i, 2);
+      var tam = parseInt(str.substr(i + 2, 2), 10);
+      if (isNaN(tam)) break;
+      campos[id] = str.substr(i + 4, tam);
+      i += 4 + tam;
+    }
+    return campos;
+  }
+
+  function ler(codigo) {
+    codigo = String(codigo || '').trim();
+    if (codigo.length < 20) return null;
+
+    var c = desmontar(codigo);
+    if (!c['26'] && !c['27']) return null;
+
+    /* a conta PIX pode estar em 26..51; procura a que tem o domínio do Bacen */
+    var conta = null;
+    for (var n = 26; n <= 51; n++) {
+      var chave = String(n);
+      if (!c[chave]) continue;
+      var sub = desmontar(c[chave]);
+      if ((sub['00'] || '').toUpperCase().indexOf('BR.GOV.BCB.PIX') !== -1) { conta = sub; break; }
+    }
+    if (!conta) return null;
+
+    return {
+      chave: conta['01'] || '',
+      descricao: conta['02'] || '',
+      nomeRecebedor: c['59'] || '',
+      cidade: c['60'] || '',
+      valor: c['54'] ? Number(c['54']) : 0,
+      valido: validar(codigo)
+    };
+  }
+
+  return { gerar: gerar, validar: validar, crc16: crc16, ler: ler };
 })();
