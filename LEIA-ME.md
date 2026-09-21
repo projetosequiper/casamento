@@ -321,7 +321,30 @@ isso copia os itens do `conteudo.js` para o banco. A partir daí, é esta tela
 que manda no que aparece no site — as mudanças entram no ar na hora, sem
 precisar subir nada no GitHub.
 
+**Textos do site** — escrever a **nossa história**, a **linha do tempo** e as
+**informações úteis**, mais as **perguntas frequentes**. Na primeira vez,
+clique em **Publicar os textos atuais**: isso copia o que está no
+`conteudo.js` para o banco. Depois disso:
+
+- **Nossa história** — o título da seção e o parágrafo de abertura. Deixe os
+  dois vazios (e a linha do tempo sem nenhum item) para a seção inteira sumir
+  do site.
+- **Linha do tempo** — cada momento tem um *quando* (opcional: "2019", "Verão
+  de 2021"), um título e um texto. As setas ↑ ↓ mudam a ordem.
+- **Informações úteis** — os cartões de traje, hospedagem, como chegar,
+  crianças. Cada um escolhe um dos sete ícones.
+- **Perguntas frequentes** — pergunta e resposta, na ordem que você quiser.
+
+Tudo entra no ar na hora, sem subir nada no GitHub. Atenção: depois de
+publicar, quem manda é o painel — se você apagar todos os itens de uma seção,
+ela fica vazia mesmo; a lista de exemplo do `conteudo.js` não volta.
+
 **Recados** — aprovar ou tirar do mural.
+
+**PIX** — cadastrar a chave que recebe os presentes. Arraste ou cole o print
+do QR Code do seu banco e o painel lê a chave sozinho. O botão **Testar com
+R$ 1,00** gera um código para você conferir no app do banco antes de
+divulgar o site.
 
 ## Quando você atualizar os arquivos
 

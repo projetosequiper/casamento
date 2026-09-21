@@ -141,6 +141,59 @@ window.DADOS = (function () {
       });
     },
 
+    /* ---------- TEXTOS DO SITE ----------
+       Nossa história, linha do tempo, informações úteis e o FAQ.
+       Ficam no banco para serem editados pelo painel. Enquanto o
+       nó estiver vazio, o site usa o que está no conteudo.js.
+
+       textos/historia      -> { titulo, texto }
+       textos/momentos/{id} -> { data, titulo, texto, ordem }
+       textos/informacoes/{id} -> { icone, titulo, texto, ordem }
+       textos/faq/{id}      -> { p, r, ordem }                     */
+    ouvirTextos: function (cb) {
+      iniciar().then(function (ok) {
+        if (!ok) return ouvirLocal('textos', cb);
+        ref('textos').on('value', function (snap) { cb(snap.val() || {}); });
+      });
+    },
+
+    /* Bloco de texto simples (por enquanto só 'historia') */
+    salvarBlocoTexto: function (nome, campos) {
+      return iniciar().then(function (ok) {
+        if (!ok) {
+          var t = LOCAL.ler('textos', {});
+          t[nome] = Object.assign(t[nome] || {}, campos);
+          LOCAL.gravar('textos', t);
+          return true;
+        }
+        return ref('textos/' + nome).update(campos);
+      });
+    },
+
+    /* Um item de uma seção em lista. campos === null exclui. */
+    salvarItemTexto: function (secao, idItem, campos) {
+      return iniciar().then(function (ok) {
+        if (!ok) {
+          var t = LOCAL.ler('textos', {});
+          t[secao] = t[secao] || {};
+          if (campos === null) delete t[secao][idItem];
+          else t[secao][idItem] = Object.assign(t[secao][idItem] || {}, campos);
+          LOCAL.gravar('textos', t);
+          return true;
+        }
+        var caminho = 'textos/' + secao + '/' + idItem;
+        return campos === null ? ref(caminho).remove() : ref(caminho).update(campos);
+      });
+    },
+
+    /* Grava o conjunto inteiro de uma vez (importação inicial) */
+    salvarTextos: function (mapa) {
+      return iniciar().then(function (ok) {
+        if (!ok) { LOCAL.gravar('textos', mapa); return true; }
+        return ref('textos').update(mapa);
+      });
+    },
+
     /* ---------- LISTA DE CONVIDADOS ----------
        Fica no banco para ser editada pelo painel. Enquanto
        estiver vazia, o site usa a lista do convidados.js.       */

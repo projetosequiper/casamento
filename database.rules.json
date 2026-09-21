@@ -40,6 +40,43 @@
         "$outro": { ".validate": false }
       },
 
+      "textos": {
+        ".read": true,
+        ".write": "auth != null",
+        "historia": {
+          "titulo": { ".validate": "newData.isString() && newData.val().length <= 120" },
+          "texto":  { ".validate": "newData.isString() && newData.val().length <= 2000" },
+          "$outro": { ".validate": false }
+        },
+        "momentos": {
+          "$m": {
+            "data":   { ".validate": "newData.isString() && newData.val().length <= 60" },
+            "titulo": { ".validate": "newData.isString() && newData.val().length <= 120" },
+            "texto":  { ".validate": "newData.isString() && newData.val().length <= 1200" },
+            "ordem":  { ".validate": "newData.isNumber()" },
+            "$outro": { ".validate": false }
+          }
+        },
+        "informacoes": {
+          "$i": {
+            "icone":  { ".validate": "newData.isString() && newData.val().length <= 30" },
+            "titulo": { ".validate": "newData.isString() && newData.val().length <= 120" },
+            "texto":  { ".validate": "newData.isString() && newData.val().length <= 1200" },
+            "ordem":  { ".validate": "newData.isNumber()" },
+            "$outro": { ".validate": false }
+          }
+        },
+        "faq": {
+          "$q": {
+            "p":     { ".validate": "newData.isString() && newData.val().length <= 200" },
+            "r":     { ".validate": "newData.isString() && newData.val().length <= 1200" },
+            "ordem": { ".validate": "newData.isNumber()" },
+            "$outro": { ".validate": false }
+          }
+        },
+        "$outro": { ".validate": false }
+      },
+
       "familias": {
         ".read": true,
         "$familia": {

@@ -98,7 +98,8 @@
   function familiasPublicadas() { return Object.keys(estado.familias).length > 0; }
 
   /* ---------- estado ---------- */
-  var estado = { confirmacoes: {}, presentes: {}, recados: {}, catalogo: {}, familias: {}, imagens: {}, config: {} };
+  var estado = { confirmacoes: {}, presentes: {}, recados: {}, catalogo: {},
+                 familias: {}, imagens: {}, config: {}, textos: {} };
   var abaAtiva = 'resumo';
   var busca = '';
 
@@ -167,6 +168,7 @@
     DADOS.ouvirCatalogo(function (d)     { estado.catalogo     = d || {}; pintar(); });
     DADOS.ouvirImagens(function (d)      { estado.imagens      = d || {}; pintar(); });
     DADOS.ouvirConfig(function (d)       { estado.config       = d || {}; pintar(); });
+    DADOS.ouvirTextos(function (d)       { estado.textos       = d || {}; pintar(); });
     DADOS.ouvirFamilias(function (d) {
       estado.familias = d || {};
       var chaves = Object.keys(estado.familias);
@@ -305,17 +307,18 @@
         /^(INPUT|TEXTAREA|SELECT)$/.test(foco.tagName)) return;
     $('#novo-item').classList.toggle('oculto', abaAtiva !== 'catalogo');
     $('#nova-familia').classList.toggle('oculto', abaAtiva !== 'convidados');
+    var semBarra = abaAtiva === 'resumo' || abaAtiva === 'pix' || abaAtiva === 'textos';
     $('#exportar').classList.toggle('oculto',
-      abaAtiva === 'resumo' || abaAtiva === 'catalogo' ||
-      abaAtiva === 'convidados' || abaAtiva === 'pix');
-    $('#busca').classList.toggle('oculto', abaAtiva === 'resumo' || abaAtiva === 'pix');
-    $('#barra-acoes').classList.toggle('oculto', abaAtiva === 'resumo' || abaAtiva === 'pix');
+      semBarra || abaAtiva === 'catalogo' || abaAtiva === 'convidados');
+    $('#busca').classList.toggle('oculto', semBarra);
+    $('#barra-acoes').classList.toggle('oculto', semBarra);
 
     if (abaAtiva === 'resumo')            pintarResumo();
     else if (abaAtiva === 'confirmacoes') pintarConfirmacoes();
     else if (abaAtiva === 'presentes')    pintarPresentes();
     else if (abaAtiva === 'catalogo')     pintarCatalogo();
     else if (abaAtiva === 'convidados')   pintarConvidados();
+    else if (abaAtiva === 'textos')       pintarTextos();
     else if (abaAtiva === 'pix')          pintarPix();
     else                                  pintarRecados();
   }
@@ -686,6 +689,330 @@
     }).catch(function () { aviso('Não conseguimos publicar a lista.', true); });
   }
 
+  /* ============================================================
+     TEXTOS DO SITE
+     ------------------------------------------------------------
+     Nossa história, linha do tempo, informações úteis e o FAQ.
+     Mesma lógica do catálogo: enquanto nada foi publicado, o site
+     usa o que veio no conteudo.js; depois, manda o que está aqui.
+     ============================================================ */
+
+  /* os mesmos desenhos que o site usa nos cartões */
+  var ICONES = {
+    traje:      '<path d="M8 3l4 4 4-4 5 3v14H3V6l5-3z"/><path d="M12 7v14"/>',
+    hospedagem: '<path d="M3 20V9l9-5 9 5v11"/><path d="M9 20v-6h6v6"/>',
+    transporte: '<rect x="3" y="5" width="18" height="12" rx="2"/><path d="M3 11h18M7 17v2M17 17v2"/>',
+    criancas:   '<circle cx="12" cy="8" r="3.2"/><path d="M5 20c0-3.8 3.1-6.5 7-6.5s7 2.7 7 6.5"/>',
+    presente:   '<rect x="3" y="8" width="18" height="13" rx="1.5"/><path d="M3 12h18M12 8v13"/>' +
+                '<path d="M12 8S10 3 7.5 3.8 8.5 8 12 8zM12 8s2-5 4.5-4.2S15.5 8 12 8z"/>',
+    coracao:    '<path d="M12 20s-7-4.6-7-9.4A4.1 4.1 0 0 1 12 8a4.1 4.1 0 0 1 7 2.6C19 15.4 12 20 12 20z"/>',
+    local:      '<path d="M12 21s7-6.2 7-11a7 7 0 1 0-14 0c0 4.8 7 11 7 11z"/><circle cx="12" cy="10" r="2.6"/>'
+  };
+  var NOMES_ICONE = {
+    traje: 'Traje', hospedagem: 'Hospedagem', transporte: 'Transporte',
+    criancas: 'Crianças', presente: 'Presente', coracao: 'Coração', local: 'Local'
+  };
+  function svgIcone(nome) {
+    return '<svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+           (ICONES[nome] || ICONES.coracao) + '</svg>';
+  }
+
+  /* Cada seção editável, descrita num lugar só. */
+  var SECOES = {
+    momentos: {
+      nome: 'Linha do tempo',
+      sub: 'Os momentos de vocês, na ordem em que aparecem embaixo de "Nossa história".',
+      botao: '+ Novo momento',
+      vazio: 'Nenhum momento na linha do tempo.',
+      singular: 'momento',
+      temIcone: false,
+      a: { chave: 'data',   rotulo: 'Quando', ajuda: 'Ex.: 2019 · Verão de 2021 · Dezembro de 2024. Pode deixar vazio.' },
+      b: { chave: 'titulo', rotulo: 'Título' },
+      c: { chave: 'texto',  rotulo: 'Texto' },
+      semente: function () { return (C.historia && C.historia.momentos) || []; }
+    },
+    informacoes: {
+      nome: 'Informações úteis',
+      sub: 'Os cartões com traje, hospedagem, como chegar e o que mais vocês quiserem avisar.',
+      botao: '+ Nova informação',
+      vazio: 'Nenhuma informação cadastrada.',
+      singular: 'cartão',
+      temIcone: true,
+      b: { chave: 'titulo', rotulo: 'Título' },
+      c: { chave: 'texto',  rotulo: 'Texto' },
+      semente: function () { return C.informacoes || []; }
+    },
+    faq: {
+      nome: 'Perguntas frequentes',
+      sub: 'Aparecem no fim do site, cada uma abrindo ao clicar.',
+      botao: '+ Nova pergunta',
+      vazio: 'Nenhuma pergunta cadastrada.',
+      singular: 'pergunta',
+      temIcone: false,
+      b: { chave: 'p', rotulo: 'Pergunta' },
+      c: { chave: 'r', rotulo: 'Resposta' },
+      semente: function () { return C.faq || []; }
+    }
+  };
+
+  function textosPublicados() { return Object.keys(estado.textos || {}).length > 0; }
+
+  function itensSecao(secao) {
+    var mapa = (estado.textos || {})[secao] || {};
+    return Object.keys(mapa)
+      .map(function (k) { return Object.assign({ _id: k }, mapa[k]); })
+      .sort(function (a, b) { return (a.ordem || 0) - (b.ordem || 0); });
+  }
+
+  function historiaEmUso() {
+    var h = (estado.textos || {}).historia;
+    if (h && h.titulo != null) return h;
+    return C.historia || { titulo: '', texto: '' };
+  }
+
+  function fichaHtml(secao, x, i, total) {
+    var s = SECOES[secao];
+    var olho = s.a ? x[s.a.chave] : '';
+    return '<div class="ficha">' +
+      (s.temIcone ? '<span class="ficha__icone">' + svgIcone(x.icone) + '</span>' : '') +
+      '<div class="ficha__corpo">' +
+        (olho ? '<span class="ficha__olho">' + escapar(olho) + '</span>' : '') +
+        '<strong>' + escapar(x[s.b.chave] || '(sem título)') + '</strong>' +
+        '<p>' + escapar(x[s.c.chave] || '') + '</p>' +
+      '</div>' +
+      '<div class="ficha__acoes">' +
+        '<button class="ficha__mover" data-mover="' + escapar(secao) + '" data-id="' + escapar(x._id) +
+          '" data-dir="-1" aria-label="Subir"' + (i === 0 ? ' disabled' : '') + '>&uarr;</button>' +
+        '<button class="ficha__mover" data-mover="' + escapar(secao) + '" data-id="' + escapar(x._id) +
+          '" data-dir="1" aria-label="Descer"' + (i === total - 1 ? ' disabled' : '') + '>&darr;</button>' +
+        '<button class="mini" data-editar-texto="' + escapar(secao) + '" data-id="' + escapar(x._id) + '">Editar</button>' +
+      '</div>' +
+    '</div>';
+  }
+
+  function blocoSecao(secao) {
+    var s = SECOES[secao];
+    var lista = itensSecao(secao);
+    return '<div class="bloco">' +
+      '<div class="bloco__acao">' +
+        '<div>' +
+          '<h2>' + escapar(s.nome) + '</h2>' +
+          '<p class="bloco__sub">' + escapar(s.sub) + '</p>' +
+        '</div>' +
+        '<button class="mini mini--forte" data-novo-texto="' + escapar(secao) + '">' + escapar(s.botao) + '</button>' +
+      '</div>' +
+      (lista.length
+        ? '<div class="fichas">' + lista.map(function (x, i) {
+            return fichaHtml(secao, x, i, lista.length);
+          }).join('') + '</div>'
+        : '<p class="vazio">' + escapar(s.vazio) + '</p>') +
+    '</div>';
+  }
+
+  function pintarTextos() {
+    if (!textosPublicados()) {
+      $('#conteudo-aba').innerHTML =
+        '<div class="bloco" style="text-align:center">' +
+          '<h2>Os textos ainda não foram publicados</h2>' +
+          '<p class="bloco__sub">Hoje o site mostra o que veio nos arquivos: a nossa história, ' +
+            ((C.historia && C.historia.momentos) || []).length + ' momentos na linha do tempo, ' +
+            (C.informacoes || []).length + ' informações úteis e ' +
+            (C.faq || []).length + ' perguntas frequentes.<br>' +
+            'Publique no banco para poder escrever tudo por aqui.</p>' +
+          '<button class="botao" id="importar-textos">Publicar os textos atuais</button>' +
+          '<p class="campo__ajuda" style="margin-top:1rem">Depois disso, esta tela passa a mandar no que aparece no site.</p>' +
+        '</div>';
+      $('#importar-textos').addEventListener('click', importarTextos);
+      return;
+    }
+
+    var h = historiaEmUso();
+    $('#conteudo-aba').innerHTML =
+      '<form class="bloco" id="form-historia">' +
+        '<h2>Nossa história</h2>' +
+        '<p class="bloco__sub">O título da seção e o parágrafo de abertura. ' +
+          'É o trecho que os convidados mais leem.</p>' +
+        '<div class="campo">' +
+          '<label class="campo__rotulo" for="hist-titulo">Título da seção</label>' +
+          '<input type="text" id="hist-titulo" value="' + escapar(h.titulo || '') + '" ' +
+            'placeholder="Nossa história">' +
+        '</div>' +
+        '<div class="campo">' +
+          '<label class="campo__rotulo" for="hist-texto">Texto de abertura</label>' +
+          '<textarea id="hist-texto" rows="5">' + escapar(h.texto || '') + '</textarea>' +
+          '<p class="campo__ajuda">Deixe título e texto vazios para esconder a seção inteira do site.</p>' +
+        '</div>' +
+        '<button type="submit" class="botao">Salvar nossa história</button>' +
+      '</form>' +
+      blocoSecao('momentos') +
+      blocoSecao('informacoes') +
+      blocoSecao('faq');
+
+    $('#form-historia').addEventListener('submit', function (e) {
+      e.preventDefault();
+      var b = this.querySelector('button[type=submit]');
+      b.disabled = true; b.textContent = 'Salvando...';
+      DADOS.salvarBlocoTexto('historia', {
+        titulo: $('#hist-titulo').value.trim(),
+        texto:  $('#hist-texto').value.trim()
+      })
+        .then(function () { aviso('Nossa história atualizada. Já vale no site.'); })
+        .catch(function (err) { aviso(explicarErro(err), true); })
+        .finally(function () { b.disabled = false; b.textContent = 'Salvar nossa história'; });
+    });
+  }
+
+  function importarTextos() {
+    var mapa = {
+      historia: {
+        titulo: (C.historia && C.historia.titulo) || 'Nossa história',
+        texto:  (C.historia && C.historia.texto) || ''
+      },
+      momentos: {}, informacoes: {}, faq: {}
+    };
+    ((C.historia && C.historia.momentos) || []).forEach(function (m, n) {
+      mapa.momentos['m' + n] = {
+        data: m.data || '', titulo: m.titulo || '', texto: m.texto || '', ordem: n
+      };
+    });
+    (C.informacoes || []).forEach(function (i, n) {
+      mapa.informacoes['i' + n] = {
+        icone: i.icone || 'coracao', titulo: i.titulo || '', texto: i.texto || '', ordem: n
+      };
+    });
+    (C.faq || []).forEach(function (f, n) {
+      mapa.faq['q' + n] = { p: f.p || '', r: f.r || '', ordem: n };
+    });
+
+    DADOS.salvarTextos(mapa)
+      .then(function () { aviso('Textos publicados. Agora dá para escrever tudo por aqui.'); })
+      .catch(function (err) { aviso(explicarErro(err), true); });
+  }
+
+  /* ---------- janela de edição de texto ---------- */
+  var janelaTexto = $('#janela-texto');
+  var textoEditando = null;      /* { secao, id } ou { secao, id: null } */
+
+  function fecharTexto() {
+    janelaTexto.classList.remove('janela--aberta');
+    setTimeout(function () { janelaTexto.hidden = true; }, 300);
+    document.body.style.overflow = '';
+  }
+  $('#texto-fechar').addEventListener('click', fecharTexto);
+  janelaTexto.addEventListener('click', function (e) { if (e.target === janelaTexto) fecharTexto(); });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && !janelaTexto.hidden) fecharTexto();
+  });
+
+  function abrirTexto(secao, id) {
+    var s = SECOES[secao];
+    if (!s) return;
+    textoEditando = { secao: secao, id: id || null };
+    var x = id ? (((estado.textos || {})[secao] || {})[id] || {}) : {};
+
+    $('#texto-janela-titulo').textContent = (id ? 'Editar ' : 'Novo(a) ') + s.singular;
+    $('#texto-janela-sub').textContent = s.sub;
+
+    /* ícone */
+    $('#campo-icone').classList.toggle('oculto', !s.temIcone);
+    if (s.temIcone) {
+      var atual = x.icone || 'coracao';
+      $('#grade-icones').innerHTML = Object.keys(ICONES).map(function (k) {
+        return '<label class="escolha-icone">' +
+          '<input type="radio" name="icone" value="' + k + '"' + (k === atual ? ' checked' : '') + '>' +
+          svgIcone(k) + '<span>' + escapar(NOMES_ICONE[k]) + '</span></label>';
+      }).join('');
+    }
+
+    /* campo A (opcional) */
+    $('#campo-a').classList.toggle('oculto', !s.a);
+    if (s.a) {
+      $('#rotulo-a').textContent = s.a.rotulo;
+      $('#texto-a').value = x[s.a.chave] || '';
+      $('#ajuda-a').textContent = s.a.ajuda || '';
+      $('#ajuda-a').classList.toggle('oculto', !s.a.ajuda);
+    }
+
+    $('#rotulo-b').textContent = s.b.rotulo;
+    $('#texto-b').value = x[s.b.chave] || '';
+    $('#rotulo-c').textContent = s.c.rotulo;
+    $('#texto-c').value = x[s.c.chave] || '';
+
+    $('#excluir-texto').classList.toggle('oculto', !id);
+    $('#excluir-texto').textContent = 'Excluir este(a) ' + s.singular;
+
+    janelaTexto.hidden = false;
+    requestAnimationFrame(function () { janelaTexto.classList.add('janela--aberta'); });
+    document.body.style.overflow = 'hidden';
+    (s.a ? $('#texto-a') : $('#texto-b')).focus();
+  }
+
+  $('#form-texto').addEventListener('submit', function (e) {
+    e.preventDefault();
+    if (!textoEditando) return;
+    var secao = textoEditando.secao, s = SECOES[secao];
+
+    var titulo = $('#texto-b').value.trim();
+    if (titulo.length < 2) return aviso('Escreva o ' + s.b.rotulo.toLowerCase() + '.', true);
+
+    var campos = {};
+    if (s.a) campos[s.a.chave] = $('#texto-a').value.trim();
+    campos[s.b.chave] = titulo;
+    campos[s.c.chave] = $('#texto-c').value.trim();
+    if (s.temIcone) {
+      var marcado = $('input[name=icone]:checked', $('#grade-icones'));
+      campos.icone = marcado ? marcado.value : 'coracao';
+    }
+
+    var id = textoEditando.id;
+    if (!id) {
+      id = secao.charAt(0) + Date.now().toString(36);
+      var ultimos = itensSecao(secao);
+      campos.ordem = ultimos.length ? (Number(ultimos[ultimos.length - 1].ordem) || 0) + 1 : 0;
+    }
+
+    var b = this.querySelector('button[type=submit]');
+    b.disabled = true; b.textContent = 'Salvando...';
+
+    DADOS.salvarItemTexto(secao, id, campos)
+      .then(function () {
+        aviso(textoEditando.id ? 'Atualizado. Já vale no site.' : 'Adicionado ao site.');
+        fecharTexto();
+      })
+      .catch(function (err) { aviso(explicarErro(err), true); })
+      .finally(function () { b.disabled = false; b.textContent = 'Salvar'; });
+  });
+
+  $('#excluir-texto').addEventListener('click', function () {
+    if (!textoEditando || !textoEditando.id) return;
+    var s = SECOES[textoEditando.secao];
+    perguntar('Excluir este(a) ' + s.singular + ' do site? Isso não pode ser desfeito.', 'Excluir')
+      .then(function (sim) {
+        if (!sim) return;
+        DADOS.salvarItemTexto(textoEditando.secao, textoEditando.id, null)
+          .then(function () { aviso('Excluído do site.'); fecharTexto(); })
+          .catch(function (err) { aviso(explicarErro(err), true); });
+      });
+  });
+
+  /* troca a posição de dois itens da mesma seção */
+  function moverTexto(secao, id, dir) {
+    var lista = itensSecao(secao);
+    var i = -1;
+    lista.forEach(function (x, n) { if (x._id === id) i = n; });
+    var j = i + dir;
+    if (i < 0 || j < 0 || j >= lista.length) return;
+
+    /* renumera do zero: evita empates de 'ordem' vindos da importação */
+    var nova = lista.slice();
+    nova.splice(j, 0, nova.splice(i, 1)[0]);
+
+    Promise.all(nova.map(function (x, n) {
+      if ((Number(x.ordem) || 0) === n) return true;
+      return DADOS.salvarItemTexto(secao, x._id, { ordem: n });
+    })).catch(function (err) { aviso(explicarErro(err), true); });
+  }
+
   /* ---------- PIX ---------- */
   function pixEmUso() {
     var doBanco = (estado.config && estado.config.pix) || {};
@@ -1021,6 +1348,15 @@
             .then(function () { aviso('Resposta limpa.'); })
             .catch(function (e) { aviso(explicarErro(e), true); });
         });
+
+    } else if (d.novoTexto) {
+      abrirTexto(d.novoTexto, null);
+
+    } else if (d.editarTexto) {
+      abrirTexto(d.editarTexto, d.id);
+
+    } else if (d.mover) {
+      moverTexto(d.mover, d.id, Number(d.dir));
 
     } else if (d.editar) {
       abrirItem(d.editar);

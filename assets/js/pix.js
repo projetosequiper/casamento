@@ -16,7 +16,7 @@ window.PIX = (function () {
   /* Tira acentos, símbolos e corta no tamanho máximo permitido */
   function limpar(texto, max) {
     var t = String(texto || '')
-      .normalize('NFD').replace(/[̀-ͯ]/g, '')  // remove acentos
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')  // remove acentos
       .replace(/[^A-Za-z0-9 .\-]/g, '')                  // só caracteres seguros
       .replace(/\s+/g, ' ')
       .trim()
@@ -40,7 +40,7 @@ window.PIX = (function () {
   /* Identificador da transação: até 25 caracteres, sem espaço.
      '***' significa "sem identificador".                        */
   function txid(id) {
-    var t = String(id || '').normalize('NFD').replace(/[̀-ͯ]/g, '')
+    var t = String(id || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '')
               .replace(/[^A-Za-z0-9]/g, '').toUpperCase().substring(0, 25);
     return t || '***';
   }

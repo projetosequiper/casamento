@@ -102,8 +102,6 @@
       '<span>' + escapar(C.noivos.conector) + '</span>' + escapar(C.noivos.nome2);
   $('#hero-data').textContent = C.diaSemana + ', ' + C.dataPorExtenso;
 
-  $('#historia-titulo').textContent = C.historia.titulo;
-  $('#historia-texto').textContent  = C.historia.texto;
   $('#quando-data').textContent     = C.diaSemana + ', ' + C.dataPorExtenso +
                                       (C.cidade ? ' — ' + C.cidade : '');
 
@@ -134,17 +132,84 @@
     $('#rodape-contato').innerHTML = html;
   })();
 
-  /* ---------- linha do tempo ---------- */
-  (function () {
-    var m = (C.historia && C.historia.momentos) || [];
-    if (!m.length) { $('#linha-tempo').classList.add('oculto'); return; }
+  /* ============================================================
+     TEXTOS EDITÁVEIS PELO PAINEL
+     ------------------------------------------------------------
+     Nossa história, linha do tempo, informações úteis e o FAQ
+     saem do banco quando os noivos publicam pela Área dos noivos.
+     Enquanto o banco estiver vazio, vale o que está no conteudo.js.
+     ============================================================ */
+  var TEXTOS = {};          /* o que veio do banco */
+
+  /* Publicado = os noivos já mandaram os textos para o banco pelo painel.
+     A partir daí o banco manda sozinho: se uma seção está vazia lá, ela
+     fica vazia no site — a lista de exemplo do conteudo.js não volta. */
+  function publicado() { return Object.keys(TEXTOS).length > 0; }
+
+  /* transforma { id: {...} } em lista ordenada */
+  function emLista(mapa) {
+    if (!mapa) return [];
+    return Object.keys(mapa)
+      .map(function (k) { return Object.assign({ _id: k }, mapa[k]); })
+      .sort(function (a, b) { return (a.ordem || 0) - (b.ordem || 0); });
+  }
+
+  function pintarHistoria() {
+    var h = publicado() ? (TEXTOS.historia || {}) : (C.historia || {});
+    $('#historia-titulo').textContent = h.titulo || '';
+    $('#historia-texto').textContent  = h.texto || '';
+  }
+
+  function pintarLinhaTempo() {
+    var m = publicado() ? emLista(TEXTOS.momentos)
+                        : ((C.historia && C.historia.momentos) || []);
+    $('#linha-tempo').classList.toggle('oculto', !m.length);
+    if (!m.length) return;
     $('#linha-tempo').innerHTML = m.map(function (x) {
       return '<li>' +
-        '<span class="linha-tempo__data">' + escapar(x.data) + '</span>' +
+        (x.data ? '<span class="linha-tempo__data">' + escapar(x.data) + '</span>' : '') +
         '<h3 class="linha-tempo__titulo">' + escapar(x.titulo) + '</h3>' +
         '<p>' + escapar(x.texto) + '</p></li>';
     }).join('');
-  })();
+  }
+
+  function pintarInformacoes() {
+    var lista = publicado() ? emLista(TEXTOS.informacoes) : (C.informacoes || []);
+    var secao = $('#informacoes').closest('section');
+    if (secao) secao.classList.toggle('oculto', !lista.length);
+    $('#informacoes').innerHTML = lista.map(function (i) {
+      return '<article class="cartao">' +
+        '<div class="cartao__icone">' + icone(i.icone) + '</div>' +
+        '<h3>' + escapar(i.titulo) + '</h3>' +
+        '<p>' + escapar(i.texto) + '</p></article>';
+    }).join('');
+  }
+
+  function pintarFaq() {
+    var lista = publicado() ? emLista(TEXTOS.faq) : (C.faq || []);
+    if (!lista.length) { $('#faq-secao').classList.add('oculto'); return; }
+    $('#faq-secao').classList.remove('oculto');
+    $('#faq').innerHTML = lista.map(function (f) {
+      return '<details><summary>' + escapar(f.p) + '</summary><p>' + escapar(f.r) + '</p></details>';
+    }).join('');
+  }
+
+  function pintarTextos() {
+    pintarHistoria();
+    pintarLinhaTempo();
+    pintarInformacoes();
+    pintarFaq();
+    /* sem título, sem texto e sem momentos: a seção inteira some */
+    var h = $('#historia-titulo').textContent + $('#historia-texto').textContent;
+    $('#historia').classList.toggle('oculto',
+      !h.trim() && $('#linha-tempo').classList.contains('oculto'));
+  }
+
+  pintarTextos();                                  /* pinta já, com o conteudo.js */
+  DADOS.ouvirTextos(function (t) {                 /* e de novo quando o banco responder */
+    TEXTOS = t || {};
+    pintarTextos();
+  });
 
   /* ---------- eventos (cerimônia / recepção) ----------
      Os links de rota vão SEM ponto de partida. Sem origem definida,
@@ -161,7 +226,7 @@
     /* sem coordenadas, monta uma busca limpa: tira separadores
        decorativos que só atrapalham o mapa a achar o lugar */
     var busca = [e.local, e.endereco].filter(Boolean).join(', ')
-      .replace(/[|·–—]/g, ' ')
+      .replace(/[|\u00b7\u2013\u2014]/g, ' ')
       .replace(/\s{2,}/g, ' ')
       .trim();
 
@@ -201,21 +266,8 @@
       '</article>';
   }).join('');
 
-  /* ---------- informações úteis ---------- */
-  $('#informacoes').innerHTML = (C.informacoes || []).map(function (i) {
-    return '<article class="cartao">' +
-      '<div class="cartao__icone">' + icone(i.icone) + '</div>' +
-      '<h3>' + escapar(i.titulo) + '</h3>' +
-      '<p>' + escapar(i.texto) + '</p></article>';
-  }).join('');
-
-  /* ---------- perguntas frequentes ---------- */
-  (function () {
-    if (!C.faq || !C.faq.length) { $('#faq-secao').classList.add('oculto'); return; }
-    $('#faq').innerHTML = C.faq.map(function (f) {
-      return '<details><summary>' + escapar(f.p) + '</summary><p>' + escapar(f.r) + '</p></details>';
-    }).join('');
-  })();
+  /* informações úteis e FAQ: desenhados por pintarInformacoes()
+     e pintarFaq(), logo acima — saem do painel ou do conteudo.js. */
 
   /* ---------- galeria ---------- */
   (function () {
