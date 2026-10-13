@@ -363,48 +363,56 @@ Isso só vale para mudanças em arquivo. O que você edita pelo painel
 
 ---
 
-## Passo 7 — Quando a identidade visual chegar
+## Passo 7 — A identidade visual oficial
 
-Abra `assets/css/tema.css`. Tudo que é visual está lá em cima, comentado:
+**Já está aplicada.** O site usa a identidade de 2026: as cores foram
+medidas pixel a pixel nas páginas do manual, e o monograma e o lettering
+dos nomes foram vetorizados a partir dele.
 
-1. **Fontes** — troque a linha `@import url(...)` pelo link das fontes novas
-   (Google Fonts › escolher a fonte › aba "@import") e ajuste
-   `--fonte-titulo` (títulos), `--fonte-texto` (corpo) e `--fonte-detalhe`
-   (monograma e assinaturas).
-2. **Cores** — troque os códigos `--cor-*`. A `--cor-destaque` é a cor
-   principal: aparece nos botões, no monograma, nos ramos e nos títulos
-   pequenos. Hoje está no verde-oliva das referências.
-3. **Cantos** — `--raio` em `0px` deixa tudo reto (papelaria clássica);
-   em `12px` fica moderno. Hoje está em `2px`.
-4. **Textura** — `--textura-papel` aponta para `assets/img/papel.png`.
-   Para um fundo liso, troque por `none`.
+### O que veio do manual
 
-### Identidade atual
-
-| Elemento | Valor |
+| Elemento | Onde está no site |
 |---|---|
-| Verde-oliva (destaque) | `#7c8b63` |
-| Verde profundo (rodapé) | `#39432f` |
-| Creme (fundo) | `#faf7f0` |
-| Creme fechado (seções) | `#f1ede1` |
-| Títulos | Cormorant Garamond |
-| Monograma | Pinyon Script |
-| Textos e botões | Jost |
+| Monograma JY | capa, rodapé e tela de entrada do painel |
+| Lettering "Yanne e Júlio" | capa e rodapé |
+| Verde `#606834` | botões, títulos pequenos, detalhes |
+| Oliva escuro `#404a1f` | rodapé e seções escuras |
+| Creme `#f9f6eb` | fundo de tudo |
+| Ramo de eucalipto | ornamento entre as seções |
+| Desenho da Casa do Lago | seção "O grande dia" |
+| Estampa do monograma | fundo do rodapé, bem apagada |
+| Paleta vibrante | ícones das informações e marcos da linha do tempo |
 
-O monograma **Y & J** é montado sozinho com as iniciais dos nomes. Para usar
-um monograma desenhado pelo designer, preencha `noivos.monograma` no
-`conteudo.js` (aceita HTML, então dá para colocar até um `<img>`).
+### Os arquivos da marca
 
-### Foto na capa
+- `assets/img/monograma.svg` e `assets/img/nome.svg` — os desenhos
+  vetorizados. Servem para qualquer tamanho e tomam a cor de onde estiverem.
+- `assets/js/marca.js` — os mesmos desenhos, prontos para o site usar.
+  **Não edite à mão.**
+- `assets/img/floral.png`, `local.png`, `estampa.svg`, `papel.png`
+- `assets/fontes/` — as fontes vão junto com o site, não vêm do Google.
+  O site abre igual em qualquer lugar e não manda dado de quem visita
+  para servidor de terceiros.
 
-A capa vem clara, no estilo de um convite impresso. Para usar uma foto do
-casal, preencha `capa.foto` no `conteudo.js` com o caminho da imagem
-(ex.: `'assets/img/capa.jpg'`). O site escurece a foto e clareia o texto
-automaticamente — ajuste `--hero-escurecer` no `tema.css` se precisar.
+### Se quiser ajustar
 
-O site inteiro se adapta. Não precisa tocar em `estilo.css`.
+Tudo continua em `assets/css/tema.css`, comentado:
 
----
+1. **Títulos com serifa** — hoje os títulos usam a mesma geométrica leve
+   das páginas do manual, em caixa alta. Se preferir mais clássico, o
+   item 1b do arquivo tem as quatro linhas para trocar por Cormorant
+   Garamond. Está tudo escrito lá.
+2. **Site só em oliva** — para tirar as cores vibrantes, aponte todos os
+   `--acento-*` para `var(--cor-destaque)`.
+3. **Voltar para as iniciais em fonte** — em `conteudo.js`, mude
+   `noivos.oficial` para `false`. O site volta a montar "Y & J" sozinho.
+4. **Fundo liso** — `--textura-papel: none`.
+
+### Se os nomes mudarem
+
+O lettering é um desenho, não uma fonte: ele continuará escrito
+"Yanne e Júlio". Se precisar de outro, peça o arquivo ao designer ou
+coloque `noivos.oficial: false` para voltar à fonte.
 
 ## Checklist antes de mandar o convite
 
