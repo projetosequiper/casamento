@@ -12,9 +12,14 @@ window.CONTEUDO = {
   noivos: {
     nome1: 'Yanne',
     nome2: 'Júlio',
-    conector: '&',              // pode ser 'e', '&', '♥'
+    conector: 'e',              // pode ser 'e', '&', '♥'  — a identidade usa 'e'
     hashtag: '#YanneEJulio',    // deixe '' para esconder
-    monograma: ''               // vazio = monta sozinho com as iniciais (Y & J)
+    monograma: '',              // vazio = monta sozinho com as iniciais (Y & J)
+
+    /* oficial: true  = usa o monograma e o lettering do manual
+                       da identidade visual (assets/js/marca.js)
+                false = volta para as iniciais em fonte            */
+    oficial: true
   },
 
   /* ---------- ÁREA DOS NOIVOS ----------

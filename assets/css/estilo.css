@@ -235,16 +235,16 @@ body.capa-com-foto .topo:not(.topo--fixo) .mais span { background: var(--cor-tex
 .hero--com-foto .hero__intro { color: inherit; }
 .hero--com-foto .sprig { color: rgba(255,255,255,.82); }
 
-/* monograma caligráfico */
+/* monograma oficial — SVG vetorizado do manual da marca.
+   Herda a cor de quem o contém (currentColor), então funciona
+   em oliva sobre creme e em creme sobre oliva escuro.          */
 .monograma {
-  font-family: var(--fonte-detalhe);
-  font-size: clamp(3.4rem, 9vw, 5.2rem);
-  line-height: 1;
-  color: var(--cor-destaque);
   display: block;
-  margin-bottom: .4rem;
+  width: clamp(74px, 15vw, 112px);
+  margin: 0 auto .5rem;
+  color: var(--cor-destaque);
 }
-.monograma em { font-style: normal; font-size: .62em; opacity: .75; margin: 0 -.06em; }
+.monograma svg { display: block; width: 100%; height: auto; fill: currentColor; }
 
 .hero__intro {
   font-size: var(--t-micro);
@@ -267,6 +267,15 @@ body.capa-com-foto .topo:not(.topo--fixo) .mais span { background: var(--cor-tex
   margin: .04em 0;
 }
 .hero--com-foto .hero__nomes span { color: inherit; opacity: .85; }
+
+/* nomes com o lettering oficial (conteudo.js: noivos.lettering = true) */
+.hero__nomes--oficial { color: var(--cor-destaque); }
+.hero__nomes--oficial svg {
+  display: block; height: auto; fill: currentColor;
+  width: min(100%, clamp(260px, 62vw, 620px));
+  margin-inline: auto;
+}
+.hero--com-foto .hero__nomes--oficial { color: var(--cor-texto-claro); }
 
 .hero__data {
   margin: 2.2rem 0 0;
@@ -294,10 +303,19 @@ body.capa-com-foto .topo:not(.topo--fixo) .mais span { background: var(--cor-tex
   animation: rolar 2.4s ease-in-out infinite;
 }
 
-/* ---------- RAMO BOTÂNICO (ornamento) ---------- */
-.sprig { color: var(--cor-destaque); display: block; }
-.sprig svg { display: block; width: 100%; height: 100%; }
-.sprig--hero { width: clamp(70px, 14vw, 100px); margin: 1.6rem auto 0; }
+/* ---------- RAMO BOTÂNICO (ornamento) ----------
+   O ramo de eucalipto em aquarela do manual da identidade.
+   Como é uma aquarela colorida, não acompanha a cor do texto —
+   por isso sobre fundo escuro ele ganha um leve clareamento.   */
+.sprig {
+  display: block;
+  background: var(--floral) center/contain no-repeat;
+  aspect-ratio: 172 / 258;
+}
+.sprig svg { display: none; }
+.sprig--hero { width: clamp(52px, 10vw, 78px); margin: 1.8rem auto 0; }
+.secao--escura .sprig,
+.hero--com-foto .sprig { filter: brightness(1.22) saturate(.85); }
 @keyframes rolar {
   0%, 100% { transform: translateX(-50%) scaleY(.4); transform-origin: top; opacity: .25; }
   50%      { transform: translateX(-50%) scaleY(1);  transform-origin: top; opacity: .7; }
@@ -349,7 +367,12 @@ section[id] { scroll-margin-top: 80px; }
   color: var(--cor-destaque);
   margin-bottom: 1rem;
 }
-.secao__titulo { font-size: var(--t-secao); }
+.secao__titulo {
+  font-size: var(--t-secao);
+  text-transform: var(--titulo-caixa, none);
+  font-weight: var(--titulo-peso, 400);
+  letter-spacing: var(--titulo-tracking, 0);
+}
 .secao__texto {
   max-width: var(--largura-texto);
   margin: 1.4rem auto 0;
@@ -368,7 +391,25 @@ section[id] { scroll-margin-top: 80px; }
   opacity: .5;
 }
 .ornamento::after { background: linear-gradient(90deg, var(--cor-destaque), transparent); }
-.ornamento .sprig { width: 34px; flex: 0 0 auto; }
+.ornamento .sprig { width: 40px; flex: 0 0 auto; }
+
+/* ---------- TOQUES DA PALETA OFICIAL ----------
+   As cores vibrantes do manual aparecem só aqui: nos ícones das
+   informações úteis e nos marcos da linha do tempo. Para um site
+   todo oliva, aponte os --acento-* do tema.css para --cor-destaque. */
+.cartao:nth-child(6n+1) { --acento: var(--acento-1); }
+.cartao:nth-child(6n+2) { --acento: var(--acento-2); }
+.cartao:nth-child(6n+3) { --acento: var(--acento-3); }
+.cartao:nth-child(6n+4) { --acento: var(--acento-4); }
+.cartao:nth-child(6n+5) { --acento: var(--acento-5); }
+.cartao:nth-child(6n+6) { --acento: var(--acento-6); }
+
+.linha-tempo li:nth-child(6n+1) { --acento: var(--acento-1); }
+.linha-tempo li:nth-child(6n+2) { --acento: var(--acento-2); }
+.linha-tempo li:nth-child(6n+3) { --acento: var(--acento-3); }
+.linha-tempo li:nth-child(6n+4) { --acento: var(--acento-4); }
+.linha-tempo li:nth-child(6n+5) { --acento: var(--acento-5); }
+.linha-tempo li:nth-child(6n+6) { --acento: var(--acento-6); }
 
 /* ---------- BOTÕES ---------- */
 .botao {
@@ -410,7 +451,7 @@ section[id] { scroll-margin-top: 80px; }
 .linha-tempo li:last-child { padding-bottom: 0; }
 .linha-tempo li::before {
   content: ''; position: absolute; left: 3px; top: .55rem;
-  width: 9px; height: 9px; background: var(--cor-destaque);
+  width: 9px; height: 9px; background: var(--acento, var(--cor-destaque));
   transform: rotate(45deg);
 }
 .linha-tempo__data {
@@ -420,6 +461,15 @@ section[id] { scroll-margin-top: 80px; }
 }
 .linha-tempo__titulo { font-size: 1.45rem; margin-bottom: .3rem; }
 .linha-tempo p { margin: 0; color: var(--cor-texto-suave); }
+
+/* ---------- DESENHO DO LOCAL ----------
+   A aquarela da Casa do Lago, do manual. Mistura-se ao papel:
+   o traço é da mesma família de tons do fundo.                 */
+.desenho-local {
+  display: block; width: 100%; max-width: 760px; height: auto;
+  margin: 0 auto clamp(2rem, 5vw, 3.4rem);
+  mix-blend-mode: multiply;
+}
 
 /* ---------- CARTÕES (eventos, informações) ---------- */
 .grade {
@@ -451,10 +501,12 @@ section[id] { scroll-margin-top: 80px; }
   font-style: italic; margin: 0 0 1.5rem;
 }
 .cartao__icone {
-  width: 34px; height: 34px; margin: 0 auto 1.1rem;
-  color: var(--cor-destaque);
+  width: 52px; height: 52px; margin: 0 auto 1.1rem;
+  display: grid; place-items: center; border-radius: 50%;
+  color: var(--acento, var(--cor-destaque));
+  background: color-mix(in srgb, currentColor 13%, transparent);
 }
-.cartao__icone svg { width: 100%; height: 100%; stroke: currentColor; fill: none; stroke-width: 1.2; }
+.cartao__icone svg { width: 26px; height: 26px; stroke: currentColor; fill: none; stroke-width: 1.3; }
 .cartao h3 { font-size: 1.3rem; margin-bottom: .5rem; }
 .cartao p { margin: 0; color: var(--cor-texto-suave); font-size: .96rem; }
 /* reforço de especificidade: estas vêm depois de `.cartao p` de propósito */
@@ -889,23 +941,39 @@ section[id] { scroll-margin-top: 80px; }
 
 /* ---------- RODAPÉ ---------- */
 .rodape {
+  position: relative; isolation: isolate;
   background: var(--cor-fundo-escuro);
   color: var(--cor-texto-claro);
   text-align: center;
   padding: clamp(3.5rem, 8vw, 5.5rem) 0 2.5rem;
   padding-bottom: calc(2.5rem + env(safe-area-inset-bottom, 0px));
 }
+/* estampa do monograma, do manual — bem apagada, como forro de envelope */
+.rodape::before {
+  content: ''; position: absolute; inset: 0; z-index: -1;
+  background: var(--estampa) repeat;
+  background-size: 104px auto;
+  filter: invert(1);
+  opacity: .035;
+  pointer-events: none;
+}
+.rodape > * { position: relative; }
 .monograma--rodape {
-  font-size: clamp(2.6rem, 7vw, 3.6rem);
-  color: var(--cor-destaque);
-  margin-bottom: .8rem;
+  width: clamp(58px, 11vw, 82px);
+  color: var(--cor-destaque-claro);
+  margin-bottom: .9rem;
 }
 .rodape__nomes { font-size: clamp(2rem, 6vw, 3rem); margin-bottom: .6rem; }
+.rodape__nomes--oficial { color: var(--cor-texto-claro); }
+.rodape__nomes--oficial svg {
+  display: block; height: auto; fill: currentColor;
+  width: min(100%, clamp(220px, 46vw, 400px)); margin-inline: auto;
+}
 .rodape__data { font-size: var(--t-micro); letter-spacing: .2em; text-transform: uppercase; opacity: .7; }
 .rodape__contato { display: flex; gap: .8rem; justify-content: center; flex-wrap: wrap; margin: 2rem 0; }
 .rodape__hashtag {
-  font-family: var(--fonte-titulo); font-style: italic;
-  font-size: 1.3rem; color: var(--cor-destaque); margin-top: 1.5rem;
+  font-family: var(--fonte-detalhe);
+  font-size: 1.9rem; color: var(--cor-destaque-claro); margin-top: 1.5rem;
 }
 .rodape__creditos { font-size: .75rem; opacity: .4; margin-top: 2.5rem; }
 .rodape .botao--vazado { border-color: rgba(245,241,234,.35); }

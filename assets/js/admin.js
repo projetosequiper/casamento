@@ -113,7 +113,8 @@
   var EMAIL = (C.painel && C.painel.email) || '';
 
   $('#entrada-monograma').innerHTML =
-    C.noivos.nome1.charAt(0) + '<em>&amp;</em>' + C.noivos.nome2.charAt(0);
+    (C.noivos.oficial !== false && window.MARCA && window.MARCA.monograma) ||
+    (C.noivos.nome1.charAt(0) + '<em>&amp;</em>' + C.noivos.nome2.charAt(0));
 
   DADOS.pronto().then(function () {
     if (DADOS.modoDemo) return abrirPainel({ email: 'modo demonstração' });

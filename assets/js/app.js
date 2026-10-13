@@ -82,11 +82,17 @@
   $('#marca').innerHTML = escapar(C.noivos.nome1) + ' <span>' +
                           escapar(C.noivos.conector) + '</span> ' + escapar(C.noivos.nome2);
 
-  /* ramos botânicos */
+  /* ramos botânicos: a aquarela oficial entra pelo CSS (--floral),
+     o SVG antigo fica só como reserva se a imagem não carregar.   */
   $$('.sprig').forEach(function (e) { e.innerHTML = SPRIG; });
 
-  /* monograma: usa o definido em conteudo.js ou monta com as iniciais */
-  var monograma = C.noivos.monograma ||
+  /* ---------- MARCA OFICIAL ----------
+     Monograma e nomes são o desenho do manual, vetorizado.
+     Se marca.js não carregar, ou se noivos.oficial for false,
+     o site volta sozinho para as iniciais em fonte caligráfica. */
+  var MARCA = (C.noivos.oficial === false) ? null : (window.MARCA || null);
+
+  var monograma = (MARCA && MARCA.monograma) || C.noivos.monograma ||
       (C.noivos.nome1.charAt(0) + '<em>&amp;</em>' + C.noivos.nome2.charAt(0));
   $$('.monograma').forEach(function (e) { e.innerHTML = monograma; });
 
@@ -98,8 +104,13 @@
   }
 
   $('#hero-frase').textContent = C.frase;
-  $('#hero-nomes').innerHTML = escapar(C.noivos.nome1) +
-      '<span>' + escapar(C.noivos.conector) + '</span>' + escapar(C.noivos.nome2);
+  if (MARCA && MARCA.nome) {
+    $('#hero-nomes').classList.add('hero__nomes--oficial');
+    $('#hero-nomes').innerHTML = MARCA.nome;
+  } else {
+    $('#hero-nomes').innerHTML = escapar(C.noivos.nome1) +
+        '<span>' + escapar(C.noivos.conector) + '</span>' + escapar(C.noivos.nome2);
+  }
   $('#hero-data').textContent = C.diaSemana + ', ' + C.dataPorExtenso;
 
   $('#quando-data').textContent     = C.diaSemana + ', ' + C.dataPorExtenso +
@@ -115,7 +126,12 @@
   $('#recados-titulo').textContent = C.recados.titulo;
   $('#recados-texto').textContent  = C.recados.texto;
 
-  $('#rodape-nomes').textContent = nomes;
+  if (MARCA && MARCA.nome) {
+    $('#rodape-nomes').classList.add('rodape__nomes--oficial');
+    $('#rodape-nomes').innerHTML = MARCA.nome;
+  } else {
+    $('#rodape-nomes').textContent = nomes;
+  }
   $('#rodape-data').textContent  = C.dataPorExtenso;
   $('#rodape-hashtag').textContent = C.noivos.hashtag || '';
 
